@@ -1,0 +1,37 @@
+SETUP INSTRUCTIONS FOR SPECIAL NEEDS LEARNING APP
+
+1. ADD VIDEO FILES:
+   - Create a new group called "Videos" in Xcode
+   - Add these 6 video files to your project bundle:
+     * breakfast_video.mp4
+     * brushteeth_video.mp4  
+     * blocks_video.mp4
+     * reading_video.mp4
+     * hello_video.mp4
+     * dressed_video.mp4
+   - Each should be 5-7 seconds long with audio narration
+
+2. TESTING:
+   - Run the app on iPad for best experience
+   - Test each activity card tap
+   - Verify video playback and audio
+   - Check accessibility features
+
+3. CUSTOMIZATION:
+   - Replace SF Symbols in ActivityCardView with custom illustrations
+   - Adjust colors in Color+Theme.swift if needed
+   - Modify activity descriptions in ActivityItem.swift
+   - Add more activities by extending the sampleActivities array
+
+4. CURRENT STATE:
+   - App will show placeholder content when videos are missing
+   - All UI and interactions are fully functional
+   - Ready for video integration
+
+The app is designed with:
+- Large, accessible touch targets
+- Calm, muted colors suitable for special needs children  
+- Simple navigation and clear visual hierarchy
+- Haptic feedback for engagement
+- Full-screen video experience
+- Audio descriptions for each activity
