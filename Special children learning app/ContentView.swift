@@ -21,6 +21,9 @@ struct ContentView: View {
     @State private var pendingSingleAsset: PHAsset?
     @State private var pendingCollectionName = ""
     @State private var pendingCollectionAssets: [PHAsset] = []
+    @State private var showingRenameDialog = false
+    @State private var renameText = ""
+    @State private var activityToRename: ActivityItem?
     
     @StateObject private var persistence = VideoCollectionPersistence.shared
     
@@ -101,7 +104,9 @@ struct ContentView: View {
                                     }
                                     
                                     Button("Rename Collection") {
-                                        // Could implement rename functionality
+                                        activityToRename = activity
+                                        renameText = activity.title
+                                        showingRenameDialog = true
                                     }
                                 }
                             }
@@ -163,6 +168,24 @@ struct ContentView: View {
             }
         } message: {
             Text("Give your video a memorable name")
+        }
+        .alert("Rename Collection", isPresented: $showingRenameDialog) {
+            TextField("Collection name", text: $renameText)
+                .textInputAutocapitalization(.words)
+            
+            Button("Save") {
+                if let activity = activityToRename {
+                    renameCollection(activity, newName: renameText)
+                }
+            }
+            .disabled(renameText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            
+            Button("Cancel", role: .cancel) {
+                activityToRename = nil
+                renameText = ""
+            }
+        } message: {
+            Text("Enter a new name for your collection")
         }
         .toast(isShowing: $showToast, message: toastMessage)
         .task {
@@ -237,11 +260,75 @@ struct ContentView: View {
         // Remove from current session
         customVideos.removeAll { $0.id == activity.id }
         
-        // Note: For proper deletion from persistence, we'd need to map 
-        // ActivityItem back to SavedVideoCollection ID
+        // Find and delete from persistence by matching title and asset count
+        if let matchingCollection = persistence.savedCollections.first(where: { 
+            $0.title == activity.title && 
+            $0.assetIdentifiers.count == (activity.videoAssets?.count ?? (activity.videoAsset != nil ? 1 : 0))
+        }) {
+            persistence.deleteCollection(matchingCollection)
+        }
         
         toastMessage = "Collection deleted"
         showToast = true
+    }
+    
+    private func renameCollection(_ activity: ActivityItem, newName: String) {
+        let cleanName = newName.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Find matching collection in persistence
+        if let matchingCollection = persistence.savedCollections.first(where: { 
+            $0.title == activity.title && 
+            $0.assetIdentifiers.count == (activity.videoAssets?.count ?? (activity.videoAsset != nil ? 1 : 0))
+        }) {
+            // Update in persistence
+            persistence.renameCollection(matchingCollection, newTitle: cleanName)
+            
+            // Update in local customVideos array
+            if let index = customVideos.firstIndex(where: { $0.id == activity.id }) {
+                let updatedActivity: ActivityItem
+                
+                if let videoAssets = activity.videoAssets {
+                    // Collection of videos
+                    updatedActivity = ActivityItem(
+                        title: cleanName,
+                        imageName: activity.imageName,
+                        videoAssets: videoAssets,
+                        audioDescription: activity.audioDescription,
+                        backgroundColor: activity.backgroundColor
+                    )
+                } else if let videoAsset = activity.videoAsset {
+                    // Single video
+                    updatedActivity = ActivityItem(
+                        title: cleanName,
+                        imageName: activity.imageName,
+                        videoAsset: videoAsset,
+                        audioDescription: activity.audioDescription,
+                        backgroundColor: activity.backgroundColor
+                    )
+                } else {
+                    // Fallback for sample activities with videoFileName
+                    updatedActivity = ActivityItem(
+                        title: cleanName,
+                        imageName: activity.imageName,
+                        videoFileName: activity.videoFileName ?? "",
+                        audioDescription: activity.audioDescription,
+                        backgroundColor: activity.backgroundColor
+                    )
+                }
+                
+                customVideos[index] = updatedActivity
+            }
+            
+            toastMessage = "Collection renamed to '\(cleanName)'"
+        } else {
+            toastMessage = "Could not rename collection"
+        }
+        
+        showToast = true
+        
+        // Reset state
+        activityToRename = nil
+        renameText = ""
     }
 }
 
