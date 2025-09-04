@@ -21,6 +21,7 @@ struct VideoPlayerView: View {
     @State private var thumbnailImage: UIImage?
     @State private var revealProgress: CGFloat = 0
     @State private var hasStartedPlaying = false
+    @State private var didPlayThumbnailSound = false
 
     var body: some View {
         GeometryReader { geo in
@@ -51,9 +52,12 @@ struct VideoPlayerView: View {
                             .mask(TileRevealMask(progress: revealProgress))
                             .ignoresSafeArea()
                             .onAppear {
-                                // Animate reveal once thumbnail is ready
                                 withAnimation(.easeInOut(duration: 1.4)) {
                                     revealProgress = 1.0
+                                }
+                                if !didPlayThumbnailSound {
+                                    SoundPlayer.shared.playWhoosh()
+                                    didPlayThumbnailSound = true
                                 }
                             }
 
@@ -109,9 +113,11 @@ struct VideoPlayerView: View {
             }
             .contentShape(Rectangle()) // so taps anywhere register
             .onTapGesture {
-                // Only handle taps during playback
+                // Handle taps to start video or during playback
                 if hasStartedPlaying {
                     handleTap()
+                } else {
+                    startVideo()
                 }
             }
         }
@@ -119,6 +125,7 @@ struct VideoPlayerView: View {
         .onDisappear {
             player?.pause()
             player = nil
+            SoundEffectPlayer.shared.stopAll()
         }
     }
 
@@ -169,6 +176,7 @@ struct VideoPlayerView: View {
         hasStartedPlaying = true
         videoEnded = false
         isPlaying = true
+        SoundEffectPlayer.shared.stopAll()
         player.seek(to: .zero)
         player.play()
     }
