@@ -15,7 +15,6 @@ struct PhotoCollectionView: View {
     @State private var currentIndex = 0
     @State private var photos: [UIImage] = []
     @State private var isLoading = true
-    @State private var loadingProgress = 0.0
     @StateObject private var soundPlayer = SoundPlayer.shared
     
     private var photoAssets: [PHAsset] {
@@ -25,7 +24,7 @@ struct PhotoCollectionView: View {
     var body: some View {
         ZStack {
             Color.black
-                .ignoresSafeArea()
+                .ignoresSafeArea(.all)
             
             if isLoading {
                 VStack(spacing: 30) {
@@ -36,10 +35,6 @@ struct PhotoCollectionView: View {
                     Text("Loading photos...")
                         .font(.title2)
                         .foregroundColor(.white)
-                    
-                    ProgressView(value: loadingProgress)
-                        .progressViewStyle(LinearProgressViewStyle(tint: .white))
-                        .frame(width: 200)
                 }
             } else if photos.isEmpty {
                 VStack(spacing: 20) {
@@ -49,98 +44,29 @@ struct PhotoCollectionView: View {
                     Text("No photos available")
                         .font(.title2)
                         .foregroundColor(.white)
-                    
-                    Button("Close") {
-                        onDismiss()
-                    }
-                    .font(.headline)
-                    .foregroundColor(.black)
-                    .padding()
-                    .background(Color.white)
-                    .cornerRadius(12)
                 }
             } else {
-                VStack(spacing: 0) {
-                    // Top controls
+                // Full screen photo display
+                Image(uiImage: photos[currentIndex])
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .clipped()
+                
+                // Close button (top right)
+                VStack {
                     HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(activity.title)
-                                .font(.headline)
-                                .foregroundColor(.white)
-                            Text("\(currentIndex + 1) of \(photos.count)")
-                                .font(.caption)
-                                .foregroundColor(.white.opacity(0.8))
-                        }
-                        
                         Spacer()
-                        
                         Button(action: onDismiss) {
                             Image(systemName: "xmark.circle.fill")
-                                .font(.title)
+                                .font(.largeTitle)
                                 .foregroundColor(.white)
                                 .background(Color.black.opacity(0.5))
                                 .clipShape(Circle())
                         }
+                        .padding()
                     }
-                    .padding()
-                    
                     Spacer()
-                    
-                    // Photo display
-                    TabView(selection: $currentIndex) {
-                        ForEach(0..<photos.count, id: \.self) { index in
-                            Image(uiImage: photos[index])
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .tag(index)
-                        }
-                    }
-                    .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-                    .gesture(
-                        DragGesture()
-                            .onEnded { value in
-                                // Add haptic feedback for swipe
-                                let generator = UIImpactFeedbackGenerator(style: .light)
-                                generator.impactOccurred()
-                            }
-                    )
-                    
-                    Spacer()
-                    
-                    // Bottom controls
-                    HStack(spacing: 40) {
-                        Button(action: previousPhoto) {
-                            Image(systemName: "chevron.left.circle.fill")
-                                .font(.title)
-                                .foregroundColor(currentIndex > 0 ? .white : .gray)
-                        }
-                        .disabled(currentIndex <= 0)
-                        
-                        // Page indicators
-                        HStack(spacing: 8) {
-                            ForEach(0..<photos.count, id: \.self) { index in
-                                Circle()
-                                    .fill(index == currentIndex ? Color.white : Color.white.opacity(0.4))
-                                    .frame(width: 8, height: 8)
-                            }
-                        }
-                        
-                        Button(action: nextPhoto) {
-                            Image(systemName: "chevron.right.circle.fill")
-                                .font(.title)
-                                .foregroundColor(currentIndex < photos.count - 1 ? .white : .gray)
-                        }
-                        .disabled(currentIndex >= photos.count - 1)
-                    }
-                    .padding(.bottom, 40)
-                    
-                    // Description
-                    Text(activity.audioDescription)
-                        .font(.body)
-                        .foregroundColor(.white.opacity(0.9))
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
-                        .padding(.bottom, 40)
                 }
             }
         }
@@ -148,9 +74,9 @@ struct PhotoCollectionView: View {
             loadPhotos()
             soundPlayer.playWhoosh(volume: 0.3, rate: 1.2)
         }
-        .onChange(of: currentIndex) { _, _ in
-            // Play subtle sound when changing photos
-            soundPlayer.playWhoosh(volume: 0.1, rate: 1.5)
+        .onTapGesture {
+            // Simple tap to go to next photo
+            nextPhoto()
         }
     }
     
@@ -163,14 +89,9 @@ struct PhotoCollectionView: View {
         Task {
             var loadedImages: [UIImage] = []
             
-            for (index, asset) in photoAssets.enumerated() {
+            for asset in photoAssets {
                 if let image = await loadFullSizeImage(for: asset) {
                     loadedImages.append(image)
-                }
-                
-                // Update progress
-                await MainActor.run {
-                    loadingProgress = Double(index + 1) / Double(photoAssets.count)
                 }
             }
             
@@ -199,19 +120,17 @@ struct PhotoCollectionView: View {
     }
     
     private func nextPhoto() {
-        if currentIndex < photos.count - 1 {
-            withAnimation(.easeInOut(duration: 0.3)) {
-                currentIndex += 1
-            }
-        }
-    }
-    
-    private func previousPhoto() {
-        if currentIndex > 0 {
-            withAnimation(.easeInOut(duration: 0.3)) {
-                currentIndex -= 1
-            }
-        }
+        guard !photos.isEmpty else { return }
+        
+        // Play sound effect
+        soundPlayer.playWhoosh(volume: 0.2, rate: 1.5)
+        
+        // Add haptic feedback
+        let generator = UIImpactFeedbackGenerator(style: .light)
+        generator.impactOccurred()
+        
+        // Simple increment with wrap-around to beginning
+        currentIndex = (currentIndex + 1) % photos.count
     }
 }
 
