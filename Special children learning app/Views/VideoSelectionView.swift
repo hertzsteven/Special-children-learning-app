@@ -407,80 +407,104 @@ struct VideoThumbnailView: View {
     let onTap: () -> Void
     
     @State private var thumbnailImage: UIImage?
+    @State private var isLoading = true
     
     var body: some View {
-        Button(action: onTap) {
-            ZStack {
-                Rectangle()
-                    .fill(Color.gray.opacity(0.3))
-                    .aspectRatio(16/9, contentMode: .fit)
-                    .overlay {
-                        if let image = thumbnailImage {
-                            Image(uiImage: image)
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                        } else {
-                            ProgressView()
-                                .scaleEffect(0.8)
-                        }
-                    }
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 3)
-                    )
-
-                // Selection checkbox (top-left)
-                if isMultiSelectMode {
-                    VStack {
-                        HStack {
-                            Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                                .font(.title2)
-                                .foregroundColor(isSelected ? .blue : .white)
-                                .background(Color.black.opacity(0.5))
-                                .clipShape(Circle())
-                                .padding(.top, 4)
-                                .padding(.leading, 4)
-                            Spacer()
-                        }
-                        Spacer()
+        ZStack {
+            // Background
+            Rectangle()
+                .fill(Color.gray.opacity(0.3))
+                .aspectRatio(16/9, contentMode: .fit)
+                .overlay {
+                    if let image = thumbnailImage {
+                        Image(uiImage: image)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    } else {
+                        ProgressView()
+                            .scaleEffect(0.8)
                     }
                 }
-                
-                // Play icon overlay (center)
-                if !isMultiSelectMode {
-                    Image(systemName: "play.circle.fill")
-                        .font(.title2)
-                        .foregroundColor(.white)
-                        .background(Color.black.opacity(0.5))
-                        .clipShape(Circle())
-                }
-
-                // Duration badge (bottom-right)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 4)
+                )
+            
+            // Selection overlay - SINGLE TAP TARGET
+            if isMultiSelectMode {
                 VStack {
-                    Spacer()
                     HStack {
+                        ZStack {
+                            Circle()
+                                .fill(isSelected ? Color.blue : Color.black.opacity(0.5))
+                                .frame(width: 30, height: 30)
+                            
+                            Image(systemName: isSelected ? "checkmark" : "")
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundColor(.white)
+                        }
+                        .padding(.top, 8)
+                        .padding(.leading, 8)
                         Spacer()
-                        Text(formatDuration(video.duration))
-                            .font(.caption2)
-                            .fontWeight(.medium)
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(Color.black.opacity(0.7))
-                            .cornerRadius(4)
-                            .padding(.bottom, 4)
-                            .padding(.trailing, 4)
                     }
+                    Spacer()
+                }
+            }
+            
+            // Play icon (only in single select mode)
+            if !isMultiSelectMode {
+                Image(systemName: "play.circle.fill")
+                    .font(.title2)
+                    .foregroundColor(.white)
+                    .background(Color.black.opacity(0.5))
+                    .clipShape(Circle())
+            }
+            
+            // Duration badge
+            VStack {
+                Spacer()
+                HStack {
+                    Spacer()
+                    Text(formatDuration(video.duration))
+                        .font(.caption2)
+                        .fontWeight(.medium)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.black.opacity(0.7))
+                        .cornerRadius(4)
+                        .padding(.bottom, 4)
+                        .padding(.trailing, 4)
                 }
             }
         }
-        .buttonStyle(.plain)
-        .task {
-            thumbnailImage = await photoLibraryManager.loadThumbnail(
-                for: video.asset,
-                targetSize: CGSize(width: 150, height: 150)
-            )
+        .contentShape(Rectangle()) // Make entire area tappable
+        .onTapGesture {
+            // Add haptic feedback for immediate response
+            if isMultiSelectMode {
+                let generator = UIImpactFeedbackGenerator(style: .light)
+                generator.impactOccurred()
+            }
+            onTap()
+        }
+        .task(id: video.id) {
+            // Only load thumbnail if not already loaded
+            if thumbnailImage == nil {
+                await loadThumbnail()
+            }
+        }
+    }
+    
+    private func loadThumbnail() async {
+        let image = await photoLibraryManager.loadThumbnail(
+            for: video.asset,
+            targetSize: CGSize(width: 120, height: 120) // Smaller size for performance
+        )
+        
+        await MainActor.run {
+            self.thumbnailImage = image
+            self.isLoading = false
         }
     }
     
