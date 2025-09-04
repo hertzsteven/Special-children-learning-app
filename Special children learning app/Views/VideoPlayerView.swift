@@ -8,6 +8,7 @@
 import SwiftUI
 import AVKit
 import AVFoundation
+import Photos
 
 struct VideoPlayerView: View {
     let activity: ActivityItem
@@ -16,6 +17,7 @@ struct VideoPlayerView: View {
     @State private var player: AVPlayer?
     @State private var isPlaying = false
     @State private var videoEnded = false
+    @State private var isLoadingVideo = false
 
     // Thumbnail + animation
     @State private var thumbnailImage: UIImage?
@@ -28,8 +30,20 @@ struct VideoPlayerView: View {
             ZStack {
                 Color.black.ignoresSafeArea()
 
+                // Loading indicator for PHAsset videos
+                if isLoadingVideo {
+                    VStack(spacing: 20) {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .scaleEffect(1.5)
+                        Text("Loading video...")
+                            .foregroundColor(.white)
+                            .font(.headline)
+                    }
+                }
+
                 // Full-screen video, no controls
-                if let player {
+                if let player, !isLoadingVideo {
                     if hasStartedPlaying {
                         FullScreenPlayerView(player: player)
                             .ignoresSafeArea()
@@ -42,7 +56,7 @@ struct VideoPlayerView: View {
                 }
 
                 // Animated thumbnail overlay (only when not yet playing)
-                if !hasStartedPlaying {
+                if !hasStartedPlaying && !isLoadingVideo {
                     if let image = thumbnailImage {
                         Image(uiImage: image)
                             .resizable()
@@ -116,7 +130,7 @@ struct VideoPlayerView: View {
                 // Handle taps to start video or during playback
                 if hasStartedPlaying {
                     handleTap()
-                } else {
+                } else if !isLoadingVideo {
                     startVideo()
                 }
             }
@@ -130,11 +144,48 @@ struct VideoPlayerView: View {
     }
 
     private func setupPlayer() {
+        // Check if we have a PHAsset video or bundle video
+        if let videoAsset = activity.videoAsset {
+            setupPHAssetPlayer(videoAsset)
+        } else if let videoFileName = activity.videoFileName {
+            setupBundlePlayer(videoFileName)
+        }
+    }
+    
+    private func setupPHAssetPlayer(_ asset: PHAsset) {
+        isLoadingVideo = true
+        
+        Task {
+            // Get video URL from PHAsset
+            let options = PHVideoRequestOptions()
+            options.deliveryMode = .highQualityFormat
+            options.isNetworkAccessAllowed = true
+            
+            await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+                PHImageManager.default().requestAVAsset(forVideo: asset, options: options) { avAsset, _, _ in
+                    DispatchQueue.main.async {
+                        if let urlAsset = avAsset as? AVURLAsset {
+                            let player = AVPlayer(url: urlAsset.url)
+                            self.player = player
+                            self.setupPlayerObserver(player)
+                        }
+                        self.isLoadingVideo = false
+                        continuation.resume()
+                    }
+                }
+            }
+            
+            // Generate thumbnail from PHAsset
+            await generateThumbnailFromPHAsset(asset)
+        }
+    }
+    
+    private func setupBundlePlayer(_ videoFileName: String) {
         // Try mp4 then mov
         var url: URL?
-        if let u = Bundle.main.url(forResource: activity.videoFileName, withExtension: "mp4") {
+        if let u = Bundle.main.url(forResource: videoFileName, withExtension: "mp4") {
             url = u
-        } else if let u = Bundle.main.url(forResource: activity.videoFileName, withExtension: "mov") {
+        } else if let u = Bundle.main.url(forResource: videoFileName, withExtension: "mov") {
             url = u
         }
 
@@ -142,18 +193,43 @@ struct VideoPlayerView: View {
 
         let player = AVPlayer(url: url)
         self.player = player
-
+        setupPlayerObserver(player)
+        
+        // Generate first-frame thumbnail for animated reveal
+        generateThumbnailFromURL(url)
+    }
+    
+    private func setupPlayerObserver(_ player: AVPlayer) {
         // Observe end of playback
         NotificationCenter.default.addObserver(forName: .AVPlayerItemDidPlayToEndTime, object: player.currentItem, queue: .main) { _ in
             isPlaying = false
             videoEnded = true
         }
-
-        // Generate first-frame thumbnail for animated reveal
-        generateThumbnail(from: url)
+    }
+    
+    private func generateThumbnailFromPHAsset(_ asset: PHAsset) async {
+        let options = PHImageRequestOptions()
+        options.deliveryMode = .highQualityFormat
+        options.isNetworkAccessAllowed = true
+        
+        let image = await withCheckedContinuation { (continuation: CheckedContinuation<UIImage?, Never>) in
+            PHImageManager.default().requestImage(
+                for: asset,
+                targetSize: CGSize(width: 1920, height: 1080),
+                contentMode: .aspectFill,
+                options: options
+            ) { image, _ in
+                continuation.resume(returning: image)
+            }
+        }
+        
+        await MainActor.run {
+            self.thumbnailImage = image
+            self.revealProgress = 0
+        }
     }
 
-    private func generateThumbnail(from url: URL) {
+    private func generateThumbnailFromURL(_ url: URL) {
         let asset = AVURLAsset(url: url)
         let gen = AVAssetImageGenerator(asset: asset)
         gen.appliesPreferredTrackTransform = true

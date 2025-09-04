@@ -6,8 +6,13 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		466766732E69D91800EAE1C0 /* Photos.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 466766722E69D91800EAE1C0 /* Photos.framework */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		466765CA2E68B5FC00EAE1C0 /* Special children learning app.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Special children learning app.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		466766722E69D91800EAE1C0 /* Photos.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Photos.framework; path = System/Library/Frameworks/Photos.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -23,6 +28,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				466766732E69D91800EAE1C0 /* Photos.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -33,6 +39,7 @@
 			isa = PBXGroup;
 			children = (
 				466765CC2E68B5FC00EAE1C0 /* Special children learning app */,
+				466766712E69D91800EAE1C0 /* Frameworks */,
 				466765CB2E68B5FC00EAE1C0 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -43,6 +50,14 @@
 				466765CA2E68B5FC00EAE1C0 /* Special children learning app.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		466766712E69D91800EAE1C0 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				466766722E69D91800EAE1C0 /* Photos.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -256,6 +271,8 @@
 				DEVELOPMENT_TEAM = MZ552MTEJZ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "his app needs access to your photo library to let you select videos for learning activities. Your videos will only be used within the app for educational purposes.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "his app needs access to your photo library to let you select videos for learning activities. Your videos will only be used within the app for educational purposes.\nhis app needs access to your photo library to let you select videos for learning activities. Your videos will only be used within the app for educational purposes.\nhis app needs access to your photo library to let you select videos for learning activities. Your videos will only be used within the app for educational purposes.\nhis app needs access to your photo library to let you select videos for learning activities. Your videos will only be used within the app for educational purposes.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -288,6 +305,8 @@
 				DEVELOPMENT_TEAM = MZ552MTEJZ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "his app needs access to your photo library to let you select videos for learning activities. Your videos will only be used within the app for educational purposes.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "his app needs access to your photo library to let you select videos for learning activities. Your videos will only be used within the app for educational purposes.\nhis app needs access to your photo library to let you select videos for learning activities. Your videos will only be used within the app for educational purposes.\nhis app needs access to your photo library to let you select videos for learning activities. Your videos will only be used within the app for educational purposes.\nhis app needs access to your photo library to let you select videos for learning activities. Your videos will only be used within the app for educational purposes.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
