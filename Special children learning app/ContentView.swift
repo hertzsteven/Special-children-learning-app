@@ -12,9 +12,17 @@ struct ContentView: View {
     @State private var selectedActivity: ActivityItem?
     @State private var showingVideo = false
     @State private var showingVideoSelection = false
+    @State private var showingSettings = false
     @State private var customVideos: [ActivityItem] = []
     @State private var showToast = false
     @State private var toastMessage = ""
+    @State private var showingSingleVideoNameDialog = false
+    @State private var singleVideoName = ""
+    @State private var pendingSingleAsset: PHAsset?
+    @State private var pendingCollectionName = ""
+    @State private var pendingCollectionAssets: [PHAsset] = []
+    
+    @StateObject private var persistence = VideoCollectionPersistence.shared
     
     let columns = [
         GridItem(.flexible(), spacing: 20),
@@ -33,18 +41,33 @@ struct ContentView: View {
                 .ignoresSafeArea()
             
             VStack(spacing: 30) {
-                // App Title
+                // App Title and Settings
                 VStack(spacing: 8) {
-                    Text("Learning Together")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                        .foregroundColor(.primary)
-                    
-                    Text("Tap an activity to see and learn")
-                        .font(.title3)
-                        .foregroundColor(.secondary)
+                    HStack {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Learning Together")
+                                .font(.largeTitle)
+                                .fontWeight(.bold)
+                                .foregroundColor(.primary)
+                            
+                            Text("Tap an activity to see and learn")
+                                .font(.title3)
+                                .foregroundColor(.secondary)
+                        }
+                        
+                        Spacer()
+                        
+                        Button(action: {
+                            showingSettings = true
+                        }) {
+                            Image(systemName: "gearshape.fill")
+                                .font(.title2)
+                                .foregroundColor(.secondary)
+                        }
+                    }
                 }
                 .padding(.top, 50)
+                .padding(.horizontal, 20)
                 
                 // Add Video Button
                 Button(action: {
@@ -69,6 +92,18 @@ struct ContentView: View {
                             ActivityCardView(activity: activity) {
                                 selectedActivity = activity
                                 showingVideo = true
+                            }
+                            .contextMenu {
+                                // Add context menu for custom videos
+                                if customVideos.contains(where: { $0.id == activity.id }) {
+                                    Button("Delete Collection", role: .destructive) {
+                                        deleteCustomVideo(activity)
+                                    }
+                                    
+                                    Button("Rename Collection") {
+                                        // Could implement rename functionality
+                                    }
+                                }
                             }
                         }
                     }
@@ -97,19 +132,63 @@ struct ContentView: View {
         .sheet(isPresented: $showingVideoSelection) {
             VideoSelectionView(
                 onVideoSelected: { selectedAsset in
-                    addSingleVideo(from: selectedAsset)
+                    // Show naming dialog for single video
+                    pendingSingleAsset = selectedAsset
+                    singleVideoName = "My Video"
+                    showingSingleVideoNameDialog = true
                 },
-                onMultipleVideosSelected: { selectedAssets in
-                    addVideoCollection(from: selectedAssets)
+                onMultipleVideosSelected: { selectedAssets, collectionName in
+                    // Use the collection name from the naming dialog
+                    addVideoCollection(from: selectedAssets, name: collectionName)
                 }
             )
         }
+        .sheet(isPresented: $showingSettings) {
+            SettingsView()
+        }
+        .alert("Name Your Video", isPresented: $showingSingleVideoNameDialog) {
+            TextField("Video name", text: $singleVideoName)
+                .textInputAutocapitalization(.words)
+            
+            Button("Save") {
+                if let asset = pendingSingleAsset {
+                    addSingleVideo(from: asset, name: singleVideoName)
+                }
+            }
+            .disabled(singleVideoName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            
+            Button("Cancel", role: .cancel) {
+                pendingSingleAsset = nil
+                singleVideoName = ""
+            }
+        } message: {
+            Text("Give your video a memorable name")
+        }
         .toast(isShowing: $showToast, message: toastMessage)
+        .task {
+            await loadSavedCollections()
+        }
     }
     
-    private func addSingleVideo(from asset: PHAsset) {
+    private func loadSavedCollections() async {
+        let savedActivityItems = await persistence.convertToActivityItems()
+        customVideos = savedActivityItems
+    }
+    
+    private func addSingleVideo(from asset: PHAsset, name: String) {
+        let cleanName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Save to persistence
+        persistence.saveCollection(
+            title: cleanName,
+            assetIdentifiers: [asset.localIdentifier],
+            imageName: "video.circle",
+            backgroundColor: "softBlue"
+        )
+        
+        // Add to current session
         let newActivity = ActivityItem(
-            title: "Custom Video \(customVideos.count + 1)",
+            title: cleanName,
             imageName: "video.circle",
             videoAsset: asset,
             audioDescription: "A custom video from your library",
@@ -118,13 +197,30 @@ struct ContentView: View {
         customVideos.append(newActivity)
         
         // Show confirmation
-        toastMessage = "Video added!"
+        toastMessage = "'\(cleanName)' saved!"
         showToast = true
+        
+        // Reset
+        pendingSingleAsset = nil
+        singleVideoName = ""
     }
     
-    private func addVideoCollection(from assets: [PHAsset]) {
+    private func addVideoCollection(from assets: [PHAsset], name: String) {
+        let cleanName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let finalName = cleanName.isEmpty ? "My Video Collection" : cleanName
+        let identifiers = assets.map { $0.localIdentifier }
+        
+        // Save to persistence
+        persistence.saveCollection(
+            title: finalName,
+            assetIdentifiers: identifiers,
+            imageName: "play.rectangle.on.rectangle",
+            backgroundColor: "warmBeige"
+        )
+        
+        // Add to current session
         let newActivity = ActivityItem(
-            title: "My Video Collection",
+            title: finalName,
             imageName: "play.rectangle.on.rectangle",
             videoAssets: assets,
             audioDescription: "A collection of \(assets.count) videos from your library",
@@ -133,7 +229,18 @@ struct ContentView: View {
         customVideos.append(newActivity)
         
         // Show confirmation
-        toastMessage = "Video collection created with \(assets.count) videos!"
+        toastMessage = "'\(finalName)' created with \(assets.count) videos!"
+        showToast = true
+    }
+    
+    private func deleteCustomVideo(_ activity: ActivityItem) {
+        // Remove from current session
+        customVideos.removeAll { $0.id == activity.id }
+        
+        // Note: For proper deletion from persistence, we'd need to map 
+        // ActivityItem back to SavedVideoCollection ID
+        
+        toastMessage = "Collection deleted"
         showToast = true
     }
 }

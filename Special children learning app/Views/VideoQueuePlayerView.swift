@@ -14,8 +14,9 @@ struct VideoQueuePlayerView: View {
     let activity: ActivityItem
     let onDismiss: () -> Void
 
-    @State private var queuePlayer: AVQueuePlayer?
+    @State private var currentPlayer: AVPlayer?
     @State private var currentVideoIndex = 0
+    @State private var currentRepeatCount = 0
     @State private var videoURLs: [URL] = []
     @State private var isPlaying = false
     @State private var isLoadingVideos = false
@@ -27,6 +28,8 @@ struct VideoQueuePlayerView: View {
     @State private var revealProgress: CGFloat = 0
     @State private var hasStartedPlaying = false
     @State private var didPlayThumbnailSound = false
+
+    @StateObject private var settings = AppSettings.shared
 
     var totalVideos: Int {
         activity.videoAssets?.count ?? 0
@@ -59,8 +62,8 @@ struct VideoQueuePlayerView: View {
                 }
 
                 // Full-screen video player
-                if let player = queuePlayer, !isLoadingVideos, hasStartedPlaying, !isWaitingForNextVideo {
-                    FullScreenQueuePlayerView(player: player)
+                if let player = currentPlayer, !isLoadingVideos, hasStartedPlaying, !isWaitingForNextVideo {
+                    FullScreenSinglePlayerView(player: player)
                         .ignoresSafeArea()
                 }
 
@@ -130,11 +133,17 @@ struct VideoQueuePlayerView: View {
                                 .foregroundColor(.white)
                             
                             if isWaitingForNextVideo {
-                                Text("Tap to play video \(currentVideoIndex + 1) of \(totalVideos)")
-                                    .font(.headline)
-                                    .foregroundColor(.white.opacity(0.8))
+                                if currentRepeatCount < settings.videoRepeatCount - 1 {
+                                    Text("Tap to replay video \(currentVideoIndex + 1) (repeat \(currentRepeatCount + 2) of \(settings.videoRepeatCount))")
+                                        .font(.headline)
+                                        .foregroundColor(.white.opacity(0.8))
+                                } else {
+                                    Text("Tap to play video \(currentVideoIndex + 1) of \(totalVideos)")
+                                        .font(.headline)
+                                        .foregroundColor(.white.opacity(0.8))
+                                }
                             } else {
-                                Text("Playing video \(currentVideoIndex + 1) of \(totalVideos)")
+                                Text("Playing video \(currentVideoIndex + 1) of \(totalVideos) (repeat \(currentRepeatCount + 1) of \(settings.videoRepeatCount))")
                                     .font(.headline)
                                     .foregroundColor(.white.opacity(0.8))
                             }
@@ -158,8 +167,8 @@ struct VideoQueuePlayerView: View {
         }
         .onAppear(perform: setupVideoQueue)
         .onDisappear {
-            queuePlayer?.pause()
-            queuePlayer = nil
+            currentPlayer?.pause()
+            currentPlayer = nil
             SoundEffectPlayer.shared.stopAll()
         }
     }
@@ -172,6 +181,7 @@ struct VideoQueuePlayerView: View {
         Task {
             await loadVideoURLs(from: videoAssets)
             await generateThumbnailsFromAllVideos()
+            await createPlayerForCurrentVideo()
         }
     }
     
@@ -186,7 +196,6 @@ struct VideoQueuePlayerView: View {
         
         await MainActor.run {
             self.videoURLs = urls
-            self.createQueuePlayer()
             self.isLoadingVideos = false
         }
     }
@@ -207,52 +216,67 @@ struct VideoQueuePlayerView: View {
         }
     }
     
-    private func createQueuePlayer() {
-        let playerItems = videoURLs.map { AVPlayerItem(url: $0) }
-        queuePlayer = AVQueuePlayer(items: playerItems)
+    private func createPlayerForCurrentVideo() async {
+        guard currentVideoIndex < videoURLs.count else { return }
         
-        // Set up observers for when videos end
-        setupQueueObservers()
-    }
-    
-    private func setupQueueObservers() {
-        guard let player = queuePlayer else { return }
-        
-        // Observe when videos end to pause and show next thumbnail
-        NotificationCenter.default.addObserver(
-            forName: .AVPlayerItemDidPlayToEndTime,
-            object: nil,
-            queue: .main
-        ) { [self] notification in
-            if let item = notification.object as? AVPlayerItem {
-                handleVideoEnd(item: item, player: player)
-            }
+        await MainActor.run {
+            let url = videoURLs[currentVideoIndex]
+            currentPlayer = AVPlayer(url: url)
+            setupPlayerObserver()
         }
     }
     
-    private func handleVideoEnd(item: AVPlayerItem, player: AVQueuePlayer) {
-        // Pause the player
-        player.pause()
+    private func setupPlayerObserver() {
+        guard let player = currentPlayer else { return }
+        
+        // Remove any existing observers first
+        NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: nil)
+        
+        // Observe when current video ends
+        NotificationCenter.default.addObserver(
+            forName: .AVPlayerItemDidPlayToEndTime,
+            object: player.currentItem,
+            queue: .main
+        ) { [self] _ in
+            handleCurrentVideoEnd()
+        }
+    }
+    
+    private func handleCurrentVideoEnd() {
+        // Current video finished
+        currentPlayer?.pause()
         isPlaying = false
         videoHasEnded = true
         
-        // Prepare for next video
-        if currentVideoIndex < totalVideos - 1 {
-            // Move to next video
-            currentVideoIndex += 1
+        // Check if we need to repeat current video or advance
+        if currentRepeatCount < settings.videoRepeatCount - 1 {
+            // Repeat the same video
+            currentRepeatCount += 1
             isWaitingForNextVideo = true
-            // Reset animation for next thumbnail
             revealProgress = 0
             didPlayThumbnailSound = false
+            // Keep same video index and player
         } else {
-            // Last video finished, loop back to first
-            currentVideoIndex = 0
+            // Move to next video and reset repeat count
+            currentRepeatCount = 0
+            
+            if currentVideoIndex < totalVideos - 1 {
+                // Move to next video
+                currentVideoIndex += 1
+            } else {
+                // Loop back to first video
+                currentVideoIndex = 0
+            }
+            
+            // Show thumbnail for next video
             isWaitingForNextVideo = true
-            // Reset animation for first thumbnail
             revealProgress = 0
             didPlayThumbnailSound = false
-            // Recreate queue to start from beginning
-            createQueuePlayer()
+            
+            // Create player for next video
+            Task {
+                await createPlayerForCurrentVideo()
+            }
         }
     }
     
@@ -289,48 +313,30 @@ struct VideoQueuePlayerView: View {
     }
 
     private func handlePlayButtonTap() {
-        guard let player = queuePlayer else { return }
-        
         if !hasStartedPlaying {
             // Starting first video
-            startVideoQueue()
+            startCurrentVideo()
         } else if isWaitingForNextVideo {
-            // Starting next video in queue
-            startNextVideo()
+            // Starting current video (could be repeat or next video)
+            startCurrentVideo()
         }
     }
     
-    private func startVideoQueue() {
-        guard let player = queuePlayer else { return }
+    private func startCurrentVideo() {
+        guard let player = currentPlayer else { return }
+        
         hasStartedPlaying = true
         isPlaying = true
         isWaitingForNextVideo = false
         videoHasEnded = false
         SoundEffectPlayer.shared.stopAll()
-        player.play()
-    }
-    
-    private func startNextVideo() {
-        guard let player = queuePlayer else { return }
         
-        // Advance to the current video index
-        player.removeAllItems()
-        
-        // Add items starting from current index
-        let remainingURLs = Array(videoURLs.dropFirst(currentVideoIndex))
-        for url in remainingURLs {
-            let item = AVPlayerItem(url: url)
-            player.insert(item, after: nil)
-        }
-        
-        isPlaying = true
-        isWaitingForNextVideo = false
-        videoHasEnded = false
+        player.seek(to: .zero)
         player.play()
     }
 
     private func handleVideoTap() {
-        guard let player = queuePlayer else { return }
+        guard let player = currentPlayer else { return }
         
         // During video playback, tap pauses/resumes
         if isPlaying {
@@ -342,24 +348,24 @@ struct VideoQueuePlayerView: View {
     }
 }
 
-// MARK: - Full Screen Queue Player View
-struct FullScreenQueuePlayerView: UIViewRepresentable {
-    let player: AVQueuePlayer
+// MARK: - Full Screen Single Player View
+struct FullScreenSinglePlayerView: UIViewRepresentable {
+    let player: AVPlayer
 
-    func makeUIView(context: Context) -> QueuePlayerView {
-        let view = QueuePlayerView()
+    func makeUIView(context: Context) -> SinglePlayerView {
+        let view = SinglePlayerView()
         view.playerLayer.player = player
         view.playerLayer.videoGravity = .resizeAspectFill
         return view
     }
 
-    func updateUIView(_ uiView: QueuePlayerView, context: Context) {
+    func updateUIView(_ uiView: SinglePlayerView, context: Context) {
         if uiView.playerLayer.player !== player {
             uiView.playerLayer.player = player
         }
     }
 
-    final class QueuePlayerView: UIView {
+    final class SinglePlayerView: UIView {
         override static var layerClass: AnyClass { AVPlayerLayer.self }
         var playerLayer: AVPlayerLayer { layer as! AVPlayerLayer }
 

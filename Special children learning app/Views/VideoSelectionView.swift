@@ -12,9 +12,9 @@ struct VideoSelectionView: View {
     @StateObject private var photoLibraryManager = PhotoLibraryManager()
     @Environment(\.dismiss) private var dismiss
     let onVideoSelected: (PHAsset) -> Void
-    let onMultipleVideosSelected: ([PHAsset]) -> Void
+    let onMultipleVideosSelected: ([PHAsset], String) -> Void
     
-    init(onVideoSelected: @escaping (PHAsset) -> Void, onMultipleVideosSelected: @escaping ([PHAsset]) -> Void = { _ in }) {
+    init(onVideoSelected: @escaping (PHAsset) -> Void, onMultipleVideosSelected: @escaping ([PHAsset], String) -> Void = { _, _ in }) {
         self.onVideoSelected = onVideoSelected
         self.onMultipleVideosSelected = onMultipleVideosSelected
     }
@@ -88,7 +88,7 @@ struct VideoPermissionView: View {
 struct VideoAlbumListView: View {
     let photoLibraryManager: PhotoLibraryManager
     let onVideoSelected: (PHAsset) -> Void
-    let onMultipleVideosSelected: ([PHAsset]) -> Void
+    let onMultipleVideosSelected: ([PHAsset], String) -> Void
     
     @State private var selectedAlbum: PhotoAlbum?
     @State private var showingVideos = false
@@ -249,12 +249,15 @@ struct VideoGridView: View {
     let album: PhotoAlbum
     let photoLibraryManager: PhotoLibraryManager
     let onVideoSelected: (PHAsset) -> Void
-    let onMultipleVideosSelected: ([PHAsset]) -> Void
+    let onMultipleVideosSelected: ([PHAsset], String) -> Void
     
     @State private var videos: [VideoItem] = []
     @State private var isLoading = false
     @State private var isMultiSelectMode = false
     @State private var selectedVideos: Set<String> = []
+    @State private var showingNameDialog = false
+    @State private var collectionName = ""
+    @State private var pendingAssets: [PHAsset] = []
     @Environment(\.dismiss) private var dismiss
     
     private let columns = [
@@ -299,9 +302,10 @@ struct VideoGridView: View {
                                 Spacer()
                                 
                                 if selectedVideos.count > 1 {
-                                    Button("Add Selected Videos") {
-                                        onMultipleVideosSelected(selectedVideoAssets)
-                                        dismiss()
+                                    Button("Create Collection") {
+                                        pendingAssets = selectedVideoAssets
+                                        collectionName = "My Video Collection"
+                                        showingNameDialog = true
                                     }
                                     .font(.headline)
                                     .foregroundColor(.white)
@@ -357,6 +361,23 @@ struct VideoGridView: View {
                     }
                 }
             }
+        }
+        .alert("Name Your Collection", isPresented: $showingNameDialog) {
+            TextField("Collection name", text: $collectionName)
+                .textInputAutocapitalization(.words)
+            
+            Button("Create") {
+                onMultipleVideosSelected(pendingAssets, collectionName)
+                dismiss()
+            }
+            .disabled(collectionName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            
+            Button("Cancel", role: .cancel) {
+                pendingAssets = []
+                collectionName = ""
+            }
+        } message: {
+            Text("Give your video collection a memorable name")
         }
         .task {
             await loadVideos()
