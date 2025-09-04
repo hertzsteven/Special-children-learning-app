@@ -12,6 +12,12 @@ struct VideoSelectionView: View {
     @StateObject private var photoLibraryManager = PhotoLibraryManager()
     @Environment(\.dismiss) private var dismiss
     let onVideoSelected: (PHAsset) -> Void
+    let onMultipleVideosSelected: ([PHAsset]) -> Void
+    
+    init(onVideoSelected: @escaping (PHAsset) -> Void, onMultipleVideosSelected: @escaping ([PHAsset]) -> Void = { _ in }) {
+        self.onVideoSelected = onVideoSelected
+        self.onMultipleVideosSelected = onMultipleVideosSelected
+    }
     
     var body: some View {
         NavigationStack {
@@ -22,7 +28,8 @@ struct VideoSelectionView: View {
                 case .authorized, .limited:
                     VideoAlbumListView(
                         photoLibraryManager: photoLibraryManager,
-                        onVideoSelected: onVideoSelected
+                        onVideoSelected: onVideoSelected,
+                        onMultipleVideosSelected: onMultipleVideosSelected
                     )
                 @unknown default:
                     VideoPermissionView(photoLibraryManager: photoLibraryManager)
@@ -81,6 +88,7 @@ struct VideoPermissionView: View {
 struct VideoAlbumListView: View {
     let photoLibraryManager: PhotoLibraryManager
     let onVideoSelected: (PHAsset) -> Void
+    let onMultipleVideosSelected: ([PHAsset]) -> Void
     
     @State private var selectedAlbum: PhotoAlbum?
     @State private var showingVideos = false
@@ -157,7 +165,8 @@ struct VideoAlbumListView: View {
                 VideoGridView(
                     album: album,
                     photoLibraryManager: photoLibraryManager,
-                    onVideoSelected: onVideoSelected
+                    onVideoSelected: onVideoSelected,
+                    onMultipleVideosSelected: onMultipleVideosSelected
                 )
             }
         }
@@ -240,14 +249,23 @@ struct VideoGridView: View {
     let album: PhotoAlbum
     let photoLibraryManager: PhotoLibraryManager
     let onVideoSelected: (PHAsset) -> Void
+    let onMultipleVideosSelected: ([PHAsset]) -> Void
     
     @State private var videos: [VideoItem] = []
     @State private var isLoading = false
+    @State private var isMultiSelectMode = false
+    @State private var selectedVideos: Set<String> = []
     @Environment(\.dismiss) private var dismiss
     
     private let columns = [
         GridItem(.adaptive(minimum: 120), spacing: 8)
     ]
+    
+    var selectedVideoAssets: [PHAsset] {
+        videos.compactMap { video in
+            selectedVideos.contains(video.id) ? video.asset : nil
+        }
+    }
     
     var body: some View {
         NavigationStack {
@@ -270,25 +288,69 @@ struct VideoGridView: View {
                             .foregroundColor(.secondary)
                     }
                 } else {
-                    ScrollView {
-                        LazyVGrid(columns: columns, spacing: 8) {
-                            ForEach(videos) { video in
-                                VideoThumbnailView(
-                                    video: video,
-                                    photoLibraryManager: photoLibraryManager
-                                ) {
-                                    onVideoSelected(video.asset)
-                                    dismiss()
+                    VStack(spacing: 0) {
+                        // Multi-select controls
+                        if isMultiSelectMode {
+                            HStack {
+                                Text("\(selectedVideos.count) selected")
+                                    .font(.headline)
+                                    .foregroundColor(.blue)
+                                
+                                Spacer()
+                                
+                                if selectedVideos.count > 1 {
+                                    Button("Add Selected Videos") {
+                                        onMultipleVideosSelected(selectedVideoAssets)
+                                        dismiss()
+                                    }
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 8)
+                                    .background(Color.blue)
+                                    .cornerRadius(8)
                                 }
                             }
+                            .padding()
+                            .background(Color(.systemGray6))
                         }
-                        .padding()
+                        
+                        ScrollView {
+                            LazyVGrid(columns: columns, spacing: 8) {
+                                ForEach(videos) { video in
+                                    VideoThumbnailView(
+                                        video: video,
+                                        photoLibraryManager: photoLibraryManager,
+                                        isMultiSelectMode: isMultiSelectMode,
+                                        isSelected: selectedVideos.contains(video.id)
+                                    ) {
+                                        if isMultiSelectMode {
+                                            toggleSelection(for: video)
+                                        } else {
+                                            onVideoSelected(video.asset)
+                                            dismiss()
+                                        }
+                                    }
+                                }
+                            }
+                            .padding()
+                        }
                     }
                 }
             }
             .navigationTitle(album.title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItemGroup(placement: .navigationBarLeading) {
+                    Button(isMultiSelectMode ? "Cancel Selection" : "Select Multiple") {
+                        isMultiSelectMode.toggle()
+                        if !isMultiSelectMode {
+                            selectedVideos.removeAll()
+                        }
+                    }
+                    .foregroundColor(.blue)
+                }
+                
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
                         dismiss()
@@ -306,11 +368,21 @@ struct VideoGridView: View {
         videos = await photoLibraryManager.fetchVideos(from: album)
         isLoading = false
     }
+    
+    private func toggleSelection(for video: VideoItem) {
+        if selectedVideos.contains(video.id) {
+            selectedVideos.remove(video.id)
+        } else {
+            selectedVideos.insert(video.id)
+        }
+    }
 }
 
 struct VideoThumbnailView: View {
     let video: VideoItem
     let photoLibraryManager: PhotoLibraryManager
+    let isMultiSelectMode: Bool
+    let isSelected: Bool
     let onTap: () -> Void
     
     @State private var thumbnailImage: UIImage?
@@ -332,15 +404,38 @@ struct VideoThumbnailView: View {
                         }
                     }
                     .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 3)
+                    )
+
+                // Selection checkbox (top-left)
+                if isMultiSelectMode {
+                    VStack {
+                        HStack {
+                            Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                                .font(.title2)
+                                .foregroundColor(isSelected ? .blue : .white)
+                                .background(Color.black.opacity(0.5))
+                                .clipShape(Circle())
+                                .padding(.top, 4)
+                                .padding(.leading, 4)
+                            Spacer()
+                        }
+                        Spacer()
+                    }
+                }
                 
-                // Play icon overlay
-                Image(systemName: "play.circle.fill")
-                    .font(.title2)
-                    .foregroundColor(.white)
-                    .background(Color.black.opacity(0.5))
-                    .clipShape(Circle())
-                
-                // Duration badge
+                // Play icon overlay (center)
+                if !isMultiSelectMode {
+                    Image(systemName: "play.circle.fill")
+                        .font(.title2)
+                        .foregroundColor(.white)
+                        .background(Color.black.opacity(0.5))
+                        .clipShape(Circle())
+                }
+
+                // Duration badge (bottom-right)
                 VStack {
                     Spacer()
                     HStack {

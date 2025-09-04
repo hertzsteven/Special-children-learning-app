@@ -29,17 +29,42 @@ struct ActivityCardView: View {
                             .foregroundColor(.primary.opacity(0.8))
                     }
                 
-                // Activity Title
-                Text(activity.title)
-                    .font(.title2)
-                    .fontWeight(.medium)
-                    .foregroundColor(.primary)
-                    .multilineTextAlignment(.center)
+                // Activity Title and Info
+                VStack(spacing: 4) {
+                    Text(activity.title)
+                        .font(.title2)
+                        .fontWeight(.medium)
+                        .foregroundColor(.primary)
+                        .multilineTextAlignment(.center)
+                    
+                    // Show video count for collections
+                    if activity.isVideoCollection, let count = activity.videoAssets?.count {
+                        Text("\(count) videos")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
             }
         }
         .buttonStyle(CardButtonStyle())
-        .accessibilityLabel("\(activity.title). Tap to play video.")
-        .accessibilityHint("Double tap to see a video about \(activity.title)")
+        .accessibilityLabel(accessibilityLabel)
+        .accessibilityHint(accessibilityHint)
+    }
+    
+    private var accessibilityLabel: String {
+        if activity.isVideoCollection {
+            return "\(activity.title). Collection with \(activity.videoAssets?.count ?? 0) videos."
+        } else {
+            return "\(activity.title). Tap to play video."
+        }
+    }
+    
+    private var accessibilityHint: String {
+        if activity.isVideoCollection {
+            return "Double tap to play video collection"
+        } else {
+            return "Double tap to see a video about \(activity.title)"
+        }
     }
 }
 

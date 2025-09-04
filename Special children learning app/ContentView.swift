@@ -13,6 +13,8 @@ struct ContentView: View {
     @State private var showingVideo = false
     @State private var showingVideoSelection = false
     @State private var customVideos: [ActivityItem] = []
+    @State private var showToast = false
+    @State private var toastMessage = ""
     
     let columns = [
         GridItem(.flexible(), spacing: 20),
@@ -78,21 +80,34 @@ struct ContentView: View {
             
             // Video Player Overlay
             if showingVideo, let activity = selectedActivity {
-                VideoPlayerView(activity: activity) {
-                    showingVideo = false
-                    selectedActivity = nil
+                if activity.isVideoCollection {
+                    VideoQueuePlayerView(activity: activity) {
+                        showingVideo = false
+                        selectedActivity = nil
+                    }
+                } else {
+                    VideoPlayerView(activity: activity) {
+                        showingVideo = false
+                        selectedActivity = nil
+                    }
                 }
             }
         }
         .preferredColorScheme(.light) // Always use light mode for consistency
         .sheet(isPresented: $showingVideoSelection) {
-            VideoSelectionView { selectedAsset in
-                addCustomVideo(from: selectedAsset)
-            }
+            VideoSelectionView(
+                onVideoSelected: { selectedAsset in
+                    addSingleVideo(from: selectedAsset)
+                },
+                onMultipleVideosSelected: { selectedAssets in
+                    addVideoCollection(from: selectedAssets)
+                }
+            )
         }
+        .toast(isShowing: $showToast, message: toastMessage)
     }
     
-    private func addCustomVideo(from asset: PHAsset) {
+    private func addSingleVideo(from asset: PHAsset) {
         let newActivity = ActivityItem(
             title: "Custom Video \(customVideos.count + 1)",
             imageName: "video.circle",
@@ -101,6 +116,25 @@ struct ContentView: View {
             backgroundColor: "softBlue"
         )
         customVideos.append(newActivity)
+        
+        // Show confirmation
+        toastMessage = "Video added!"
+        showToast = true
+    }
+    
+    private func addVideoCollection(from assets: [PHAsset]) {
+        let newActivity = ActivityItem(
+            title: "My Video Collection",
+            imageName: "play.rectangle.on.rectangle",
+            videoAssets: assets,
+            audioDescription: "A collection of \(assets.count) videos from your library",
+            backgroundColor: "warmBeige"
+        )
+        customVideos.append(newActivity)
+        
+        // Show confirmation
+        toastMessage = "Video collection created with \(assets.count) videos!"
+        showToast = true
     }
 }
 

@@ -15,14 +15,20 @@ struct ActivityItem: Identifiable, Hashable {
     let imageName: String
     let videoFileName: String?
     let videoAsset: PHAsset?
+    let videoAssets: [PHAsset]?
     let audioDescription: String
     let backgroundColor: String
+    
+    var isVideoCollection: Bool {
+        return videoAssets != nil && (videoAssets?.count ?? 0) > 1
+    }
     
     init(title: String, imageName: String, videoFileName: String, audioDescription: String, backgroundColor: String) {
         self.title = title
         self.imageName = imageName
         self.videoFileName = videoFileName
         self.videoAsset = nil
+        self.videoAssets = nil
         self.audioDescription = audioDescription
         self.backgroundColor = backgroundColor
     }
@@ -32,6 +38,17 @@ struct ActivityItem: Identifiable, Hashable {
         self.imageName = imageName
         self.videoFileName = nil
         self.videoAsset = videoAsset
+        self.videoAssets = nil
+        self.audioDescription = audioDescription
+        self.backgroundColor = backgroundColor
+    }
+    
+    init(title: String, imageName: String, videoAssets: [PHAsset], audioDescription: String, backgroundColor: String) {
+        self.title = title
+        self.imageName = imageName
+        self.videoFileName = nil
+        self.videoAsset = nil
+        self.videoAssets = videoAssets
         self.audioDescription = audioDescription
         self.backgroundColor = backgroundColor
     }
