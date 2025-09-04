@@ -16,19 +16,36 @@ struct PhotoAlbum: Identifiable, Hashable {
     let assetCollection: PHAssetCollection
     let thumbnailAsset: PHAsset?
     let videoCount: Int
+    let photoCount: Int
+    let totalMediaCount: Int
     
-    init(assetCollection: PHAssetCollection) {
+    init(assetCollection: PHAssetCollection, videosOnly: Bool = true) {
         self.id = assetCollection.localIdentifier
         self.title = assetCollection.localizedTitle ?? "Unknown Album"
         self.assetCollection = assetCollection
         
-        let fetchOptions = PHFetchOptions()
-        fetchOptions.predicate = NSPredicate(format: "mediaType == %d", PHAssetMediaType.video.rawValue)
-        fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
+        // Fetch video count
+        let videoFetchOptions = PHFetchOptions()
+        videoFetchOptions.predicate = NSPredicate(format: "mediaType == %d", PHAssetMediaType.video.rawValue)
+        videoFetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
+        let videoAssets = PHAsset.fetchAssets(in: assetCollection, options: videoFetchOptions)
+        self.videoCount = videoAssets.count
         
-        let assets = PHAsset.fetchAssets(in: assetCollection, options: fetchOptions)
-        self.videoCount = assets.count
-        self.thumbnailAsset = assets.firstObject
+        if videosOnly {
+            self.photoCount = 0
+            self.totalMediaCount = videoCount
+            self.thumbnailAsset = videoAssets.firstObject
+        } else {
+            // Fetch photo count
+            let photoFetchOptions = PHFetchOptions()
+            photoFetchOptions.predicate = NSPredicate(format: "mediaType == %d", PHAssetMediaType.image.rawValue)
+            let photoAssets = PHAsset.fetchAssets(in: assetCollection, options: photoFetchOptions)
+            self.photoCount = photoAssets.count
+            self.totalMediaCount = videoCount + photoCount
+            
+            // Use video thumbnail if available, otherwise photo
+            self.thumbnailAsset = videoAssets.firstObject ?? photoAssets.firstObject
+        }
     }
 }
 
@@ -43,6 +60,22 @@ struct VideoItem: Identifiable, Hashable {
         self.asset = asset
         self.duration = asset.duration
         self.creationDate = asset.creationDate
+    }
+}
+
+struct MediaItem: Identifiable, Hashable {
+    let id: String
+    let asset: PHAsset
+    let duration: TimeInterval?
+    let creationDate: Date?
+    let isVideo: Bool
+    
+    init(asset: PHAsset, duration: TimeInterval? = nil, creationDate: Date? = nil) {
+        self.id = asset.localIdentifier
+        self.asset = asset
+        self.duration = asset.mediaType == .video ? (duration ?? asset.duration) : nil
+        self.creationDate = creationDate ?? asset.creationDate
+        self.isVideo = asset.mediaType == .video
     }
 }
 
@@ -93,7 +126,7 @@ class PhotoLibraryManager: ObservableObject {
                 
                 // Process user albums
                 userAlbums.enumerateObjects { collection, _, _ in
-                    let album = PhotoAlbum(assetCollection: collection)
+                    let album = PhotoAlbum(assetCollection: collection, videosOnly: true)
                     if album.videoCount > 0 {
                         albumList.append(album)
                     }
@@ -109,7 +142,7 @@ class PhotoLibraryManager: ObservableObject {
                     ]
                     
                     if !excludedSubtypes.contains(collection.assetCollectionSubtype) {
-                        let album = PhotoAlbum(assetCollection: collection)
+                        let album = PhotoAlbum(assetCollection: collection, videosOnly: true)
                         if album.videoCount > 0 {
                             albumList.append(album)
                         }
@@ -122,6 +155,64 @@ class PhotoLibraryManager: ObservableObject {
             albums = fetchedAlbums
         } catch {
             errorMessage = "Failed to load video albums: \(error.localizedDescription)"
+        }
+        
+        isLoading = false
+    }
+    
+    func fetchAllMediaAlbums() async {
+        isLoading = true
+        errorMessage = nil
+        
+        do {
+            let fetchedAlbums = await withCheckedContinuation { (continuation: CheckedContinuation<[PhotoAlbum], Never>) in
+                var albumList: [PhotoAlbum] = []
+                
+                // Fetch user albums
+                let userAlbums = PHAssetCollection.fetchAssetCollections(
+                    with: .album,
+                    subtype: .any,
+                    options: nil
+                )
+                
+                // Fetch smart albums
+                let smartAlbums = PHAssetCollection.fetchAssetCollections(
+                    with: .smartAlbum,
+                    subtype: .any,
+                    options: nil
+                )
+                
+                // Process user albums
+                userAlbums.enumerateObjects { collection, _, _ in
+                    let album = PhotoAlbum(assetCollection: collection, videosOnly: false)
+                    if album.totalMediaCount > 0 {
+                        albumList.append(album)
+                    }
+                }
+                
+                // Process smart albums
+                smartAlbums.enumerateObjects { collection, _, _ in
+                    // Skip certain system albums
+                    let excludedSubtypes: [PHAssetCollectionSubtype] = [
+                        .smartAlbumAllHidden,
+                        .smartAlbumSelfPortraits,
+                        .smartAlbumDepthEffect
+                    ]
+                    
+                    if !excludedSubtypes.contains(collection.assetCollectionSubtype) {
+                        let album = PhotoAlbum(assetCollection: collection, videosOnly: false)
+                        if album.totalMediaCount > 0 {
+                            albumList.append(album)
+                        }
+                    }
+                }
+                
+                continuation.resume(returning: albumList.sorted { $0.title < $1.title })
+            }
+            
+            albums = fetchedAlbums
+        } catch {
+            errorMessage = "Failed to load media albums: \(error.localizedDescription)"
         }
         
         isLoading = false
@@ -143,6 +234,27 @@ class PhotoLibraryManager: ObservableObject {
             }
             
             continuation.resume(returning: videoItems)
+        }
+    }
+    
+    func fetchAllMedia(from album: PhotoAlbum) async -> [MediaItem] {
+        await withCheckedContinuation { continuation in
+            let fetchOptions = PHFetchOptions()
+            fetchOptions.predicate = NSPredicate(format: "mediaType == %d OR mediaType == %d", 
+                                               PHAssetMediaType.image.rawValue, 
+                                               PHAssetMediaType.video.rawValue)
+            fetchOptions.sortDescriptors = [
+                NSSortDescriptor(key: "creationDate", ascending: false)
+            ]
+            
+            let assets = PHAsset.fetchAssets(in: album.assetCollection, options: fetchOptions)
+            var mediaItems: [MediaItem] = []
+            
+            assets.enumerateObjects { asset, _, _ in
+                mediaItems.append(MediaItem(asset: asset))
+            }
+            
+            continuation.resume(returning: mediaItems)
         }
     }
     

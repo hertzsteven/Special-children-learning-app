@@ -134,8 +134,8 @@ struct ContentView: View {
             }
         }
         .preferredColorScheme(.light) // Always use light mode for consistency
-        .sheet(isPresented: $showingVideoSelection) {
-            VideoSelectionView(
+        .fullScreenCover(isPresented: $showingVideoSelection) {
+            FullScreenMediaSelectionView(
                 onVideoSelected: { selectedAsset in
                     // Show naming dialog for single video
                     pendingSingleAsset = selectedAsset
