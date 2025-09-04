@@ -125,6 +125,22 @@ struct ContentView: View {
                         showingVideo = false
                         selectedActivity = nil
                     }
+                } else if activity.isPhotoCollection {
+                    PhotoCollectionView(activity: activity) {
+                        showingVideo = false
+                        selectedActivity = nil
+                    }
+                } else if activity.isMixedMediaCollection {
+                    // We'll need to create a mixed media viewer later
+                    VideoQueuePlayerView(activity: activity) {
+                        showingVideo = false
+                        selectedActivity = nil
+                    }
+                } else if activity.isPhoto {
+                    PhotoViewerView(activity: activity) {
+                        showingVideo = false
+                        selectedActivity = nil
+                    }
                 } else {
                     VideoPlayerView(activity: activity) {
                         showingVideo = false
@@ -137,14 +153,22 @@ struct ContentView: View {
         .fullScreenCover(isPresented: $showingVideoSelection) {
             FullScreenMediaSelectionView(
                 onVideoSelected: { selectedAsset in
-                    // Show naming dialog for single video
-                    pendingSingleAsset = selectedAsset
-                    singleVideoName = "My Video"
-                    showingSingleVideoNameDialog = true
+                    // Handle both photos and videos
+                    if selectedAsset.mediaType == .video {
+                        // Show naming dialog for single video
+                        pendingSingleAsset = selectedAsset
+                        singleVideoName = "My Video"
+                        showingSingleVideoNameDialog = true
+                    } else if selectedAsset.mediaType == .image {
+                        // Show naming dialog for single photo
+                        pendingSingleAsset = selectedAsset
+                        singleVideoName = "My Photo"
+                        showingSingleVideoNameDialog = true
+                    }
                 },
                 onMultipleVideosSelected: { selectedAssets, collectionName in
-                    // Use the collection name from the naming dialog
-                    addVideoCollection(from: selectedAssets, name: collectionName)
+                    // Handle mixed media collections
+                    addMixedMediaCollection(from: selectedAssets, name: collectionName)
                 }
             )
         }
@@ -205,22 +229,35 @@ struct ContentView: View {
         persistence.saveCollection(
             title: cleanName,
             assetIdentifiers: [asset.localIdentifier],
-            imageName: "video.circle",
-            backgroundColor: "softBlue"
+            imageName: asset.mediaType == .video ? "video.circle" : "photo.circle",
+            backgroundColor: asset.mediaType == .video ? "softBlue" : "sage"
         )
         
         // Add to current session
-        let newActivity = ActivityItem(
-            title: cleanName,
-            imageName: "video.circle",
-            videoAsset: asset,
-            audioDescription: "A custom video from your library",
-            backgroundColor: "softBlue"
-        )
+        let newActivity: ActivityItem
+        if asset.mediaType == .video {
+            newActivity = ActivityItem(
+                title: cleanName,
+                imageName: "video.circle",
+                videoAsset: asset,
+                audioDescription: "A custom video from your library",
+                backgroundColor: "softBlue"
+            )
+        } else {
+            newActivity = ActivityItem(
+                title: cleanName,
+                imageName: "photo.circle",
+                photoAsset: asset,
+                audioDescription: "A custom photo from your library",
+                backgroundColor: "sage"
+            )
+        }
+        
         customVideos.append(newActivity)
         
         // Show confirmation
-        toastMessage = "'\(cleanName)' saved!"
+        let mediaType = asset.mediaType == .video ? "video" : "photo"
+        toastMessage = "'\(cleanName)' \(mediaType) saved!"
         showToast = true
         
         // Reset
@@ -228,31 +265,35 @@ struct ContentView: View {
         singleVideoName = ""
     }
     
-    private func addVideoCollection(from assets: [PHAsset], name: String) {
+    private func addMixedMediaCollection(from assets: [PHAsset], name: String) {
         let cleanName = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        let finalName = cleanName.isEmpty ? "My Video Collection" : cleanName
+        let finalName = cleanName.isEmpty ? "My Media Collection" : cleanName
         let identifiers = assets.map { $0.localIdentifier }
+        
+        let videoAssets = assets.filter { $0.mediaType == .video }
+        let photoAssets = assets.filter { $0.mediaType == .image }
         
         // Save to persistence
         persistence.saveCollection(
             title: finalName,
             assetIdentifiers: identifiers,
-            imageName: "play.rectangle.on.rectangle",
+            imageName: "rectangle.stack",
             backgroundColor: "warmBeige"
         )
         
         // Add to current session
         let newActivity = ActivityItem(
             title: finalName,
-            imageName: "play.rectangle.on.rectangle",
-            videoAssets: assets,
-            audioDescription: "A collection of \(assets.count) videos from your library",
+            imageName: "rectangle.stack",
+            videoAssets: videoAssets.isEmpty ? nil : videoAssets,
+            photoAssets: photoAssets.isEmpty ? nil : photoAssets,
+            audioDescription: "A collection of \(assets.count) items from your library",
             backgroundColor: "warmBeige"
         )
         customVideos.append(newActivity)
         
         // Show confirmation
-        toastMessage = "'\(finalName)' created with \(assets.count) videos!"
+        toastMessage = "'\(finalName)' created with \(assets.count) items!"
         showToast = true
     }
     

@@ -104,17 +104,64 @@ class VideoCollectionPersistence: ObservableObject {
         
         for collection in savedCollections {
             if let validAssets = await getValidAssets(from: collection.assetIdentifiers), !validAssets.isEmpty {
-                let activityItem = ActivityItem(
-                    title: collection.title,
-                    imageName: collection.imageName,
-                    videoAssets: validAssets,
-                    audioDescription: collection.audioDescription,
-                    backgroundColor: collection.backgroundColor
-                )
+                
+                let videoAssets = validAssets.filter { $0.mediaType == .video }
+                let photoAssets = validAssets.filter { $0.mediaType == .image }
+                
+                let activityItem: ActivityItem
+                
+                if videoAssets.count == 1 && photoAssets.isEmpty {
+                    // Single video
+                    activityItem = ActivityItem(
+                        title: collection.title,
+                        imageName: collection.imageName,
+                        videoAsset: videoAssets.first!,
+                        audioDescription: collection.audioDescription,
+                        backgroundColor: collection.backgroundColor
+                    )
+                } else if photoAssets.count == 1 && videoAssets.isEmpty {
+                    // Single photo
+                    activityItem = ActivityItem(
+                        title: collection.title,
+                        imageName: collection.imageName,
+                        photoAsset: photoAssets.first!,
+                        audioDescription: collection.audioDescription,
+                        backgroundColor: collection.backgroundColor
+                    )
+                } else if !videoAssets.isEmpty && photoAssets.isEmpty {
+                    // Video collection
+                    activityItem = ActivityItem(
+                        title: collection.title,
+                        imageName: collection.imageName,
+                        videoAssets: videoAssets,
+                        audioDescription: collection.audioDescription,
+                        backgroundColor: collection.backgroundColor
+                    )
+                } else if videoAssets.isEmpty && !photoAssets.isEmpty {
+                    // Photo collection
+                    activityItem = ActivityItem(
+                        title: collection.title,
+                        imageName: collection.imageName,
+                        photoAssets: photoAssets,
+                        audioDescription: collection.audioDescription,
+                        backgroundColor: collection.backgroundColor
+                    )
+                } else {
+                    // Mixed media collection
+                    activityItem = ActivityItem(
+                        title: collection.title,
+                        imageName: collection.imageName,
+                        videoAssets: videoAssets.isEmpty ? nil : videoAssets,
+                        photoAssets: photoAssets.isEmpty ? nil : photoAssets,
+                        audioDescription: collection.audioDescription,
+                        backgroundColor: collection.backgroundColor
+                    )
+                }
+                
                 activityItems.append(activityItem)
             } else {
-                // Handle missing videos - could show placeholder or remove
-                print("⚠️ Collection '\(collection.title)' has no valid videos")
+                // Handle missing media - could show placeholder or remove
+                print("⚠️ Collection '\(collection.title)' has no valid media")
             }
         }
         
@@ -127,8 +174,8 @@ class VideoCollectionPersistence: ObservableObject {
             var assets: [PHAsset] = []
             
             fetchResult.enumerateObjects { asset, _, _ in
-                // Only include video assets that still exist
-                if asset.mediaType == .video {
+                // Include both video and photo assets that still exist
+                if asset.mediaType == .video || asset.mediaType == .image {
                     assets.append(asset)
                 }
             }

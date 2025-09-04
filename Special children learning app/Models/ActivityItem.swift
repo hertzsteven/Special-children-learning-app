@@ -16,11 +16,30 @@ struct ActivityItem: Identifiable, Hashable {
     let videoFileName: String?
     let videoAsset: PHAsset?
     let videoAssets: [PHAsset]?
+    let photoAsset: PHAsset?
+    let photoAssets: [PHAsset]?
     let audioDescription: String
     let backgroundColor: String
     
     var isVideoCollection: Bool {
         return videoAssets != nil && (videoAssets?.count ?? 0) > 1
+    }
+    
+    var isPhotoCollection: Bool {
+        return photoAssets != nil && (photoAssets?.count ?? 0) > 1
+    }
+    
+    var isMixedMediaCollection: Bool {
+        let totalAssets = (videoAssets?.count ?? 0) + (photoAssets?.count ?? 0)
+        return totalAssets > 1 && (videoAssets?.count ?? 0) > 0 && (photoAssets?.count ?? 0) > 0
+    }
+    
+    var isPhoto: Bool {
+        return photoAsset != nil
+    }
+    
+    var isVideo: Bool {
+        return videoAsset != nil
     }
     
     init(title: String, imageName: String, videoFileName: String, audioDescription: String, backgroundColor: String) {
@@ -29,6 +48,8 @@ struct ActivityItem: Identifiable, Hashable {
         self.videoFileName = videoFileName
         self.videoAsset = nil
         self.videoAssets = nil
+        self.photoAsset = nil
+        self.photoAssets = nil
         self.audioDescription = audioDescription
         self.backgroundColor = backgroundColor
     }
@@ -39,6 +60,20 @@ struct ActivityItem: Identifiable, Hashable {
         self.videoFileName = nil
         self.videoAsset = videoAsset
         self.videoAssets = nil
+        self.photoAsset = nil
+        self.photoAssets = nil
+        self.audioDescription = audioDescription
+        self.backgroundColor = backgroundColor
+    }
+    
+    init(title: String, imageName: String, photoAsset: PHAsset, audioDescription: String, backgroundColor: String) {
+        self.title = title
+        self.imageName = imageName
+        self.videoFileName = nil
+        self.videoAsset = nil
+        self.videoAssets = nil
+        self.photoAsset = photoAsset
+        self.photoAssets = nil
         self.audioDescription = audioDescription
         self.backgroundColor = backgroundColor
     }
@@ -49,6 +84,32 @@ struct ActivityItem: Identifiable, Hashable {
         self.videoFileName = nil
         self.videoAsset = nil
         self.videoAssets = videoAssets
+        self.photoAsset = nil
+        self.photoAssets = nil
+        self.audioDescription = audioDescription
+        self.backgroundColor = backgroundColor
+    }
+    
+    init(title: String, imageName: String, photoAssets: [PHAsset], audioDescription: String, backgroundColor: String) {
+        self.title = title
+        self.imageName = imageName
+        self.videoFileName = nil
+        self.videoAsset = nil
+        self.videoAssets = nil
+        self.photoAsset = nil
+        self.photoAssets = photoAssets
+        self.audioDescription = audioDescription
+        self.backgroundColor = backgroundColor
+    }
+    
+    init(title: String, imageName: String, videoAssets: [PHAsset]?, photoAssets: [PHAsset]?, audioDescription: String, backgroundColor: String) {
+        self.title = title
+        self.imageName = imageName
+        self.videoFileName = nil
+        self.videoAsset = nil
+        self.videoAssets = videoAssets
+        self.photoAsset = nil
+        self.photoAssets = photoAssets
         self.audioDescription = audioDescription
         self.backgroundColor = backgroundColor
     }

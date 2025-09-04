@@ -20,8 +20,7 @@ struct FullScreenMediaSelectionView: View {
     @State private var mediaItems: [MediaItem] = []
     @State private var isLoadingMedia = false
     
-    // Multi-selection state
-    @State private var isMultiSelectMode = false
+    // Multi-selection state - always enabled now
     @State private var selectedMedia: Set<String> = []
     @State private var showingNameDialog = false
     @State private var collectionName = ""
@@ -32,6 +31,18 @@ struct FullScreenMediaSelectionView: View {
     var selectedVideoAssets: [PHAsset] {
         mediaItems.compactMap { item in
             selectedMedia.contains(item.id) && item.isVideo ? item.asset : nil
+        }
+    }
+    
+    var selectedPhotoAssets: [PHAsset] {
+        mediaItems.compactMap { item in
+            selectedMedia.contains(item.id) && !item.isVideo ? item.asset : nil
+        }
+    }
+    
+    var selectedAllAssets: [PHAsset] {
+        mediaItems.compactMap { item in
+            selectedMedia.contains(item.id) ? item.asset : nil
         }
     }
     
@@ -46,192 +57,180 @@ struct FullScreenMediaSelectionView: View {
     }
     
     var body: some View {
-        GeometryReader { geometry in
-            HStack(spacing: 0) {
-                // Sidebar
-                VStack(spacing: 0) {
-                    // Sidebar Header
-                    VStack(spacing: 16) {
-                        HStack {
-                            Text("Albums")
-                                .font(.title2)
-                                .fontWeight(.bold)
-                            Spacer()
-                            Button("Cancel") {
-                                dismiss()
-                            }
-                            .foregroundColor(.blue)
-                        }
-                        
-                        // Search Bar
-                        HStack {
-                            Image(systemName: "magnifyingglass")
-                                .foregroundColor(.secondary)
-                            TextField("Search albums", text: $searchText)
-                                .textFieldStyle(PlainTextFieldStyle())
-                        }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(Color(.systemGray6))
-                        .cornerRadius(10)
-                        
-                        // Media Type Picker
-                        Picker("Media Type", selection: $showingVideosOnly) {
-                            Text("Videos Only").tag(true)
-                            Text("Photos & Videos").tag(false)
-                        }
-                        .pickerStyle(SegmentedPickerStyle())
-                    }
-                    .padding()
-                    .padding(.top, 20) // Extra top padding for full screen
-                    
-                    Divider()
-                    
-                    // Albums List
-                    ScrollView {
-                        LazyVStack(spacing: 0) {
-                            ForEach(filteredAlbums) { album in
-                                AlbumSidebarRow(
-                                    album: album,
-                                    isSelected: selectedAlbum?.id == album.id,
-                                    showingVideosOnly: showingVideosOnly
-                                ) {
-                                    selectedAlbum = album
-                                    Task {
-                                        await loadAlbumMedia(album)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    
-                    Spacer() // Push content to top
-                }
-                .frame(width: sidebarWidth)
-                .background(Color(.systemGray6))
-                
-                Divider()
-                
-                // Main Content Area
-                VStack(spacing: 0) {
-                    // Main Header
-                    VStack(spacing: 12) {
-                        HStack {
-                            Text(selectedAlbum?.title ?? "Select an Album")
-                                .font(.title2)
-                                .fontWeight(.semibold)
-                            
-                            Spacer()
-                            
-                            if !mediaItems.isEmpty {
-                                Button(isMultiSelectMode ? "Cancel Selection" : "Select Multiple") {
-                                    isMultiSelectMode.toggle()
-                                    if !isMultiSelectMode {
-                                        selectedMedia.removeAll()
-                                    }
+        ZStack {
+            GeometryReader { geometry in
+                HStack(spacing: 0) {
+                    // Sidebar
+                    VStack(spacing: 0) {
+                        // Sidebar Header
+                        VStack(spacing: 16) {
+                            HStack {
+                                Text("Albums")
+                                    .font(.title2)
+                                    .fontWeight(.bold)
+                                Spacer()
+                                Button("Cancel") {
+                                    dismiss()
                                 }
                                 .foregroundColor(.blue)
                             }
-                        }
-                        
-                        // Selection Status Bar
-                        if isMultiSelectMode && !selectedMedia.isEmpty {
+                            
+                            // Search Bar
                             HStack {
-                                Text("\(selectedMedia.count) selected")
-                                    .font(.headline)
-                                    .foregroundColor(.blue)
-                                
-                                Spacer()
-                                
-                                if selectedVideoAssets.count > 1 {
-                                    Button("Create Collection") {
-                                        pendingAssets = selectedVideoAssets
-                                        collectionName = "My Video Collection"
-                                        showingNameDialog = true
-                                    }
-                                    .font(.headline)
-                                    .foregroundColor(.white)
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 8)
-                                    .background(Color.blue)
-                                    .cornerRadius(8)
-                                } else if selectedMedia.count == 1 && selectedVideoAssets.count == 1 {
-                                    Button("Select Video") {
-                                        onVideoSelected(selectedVideoAssets.first!)
-                                        dismiss()
-                                    }
-                                    .font(.headline)
-                                    .foregroundColor(.white)
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 8)
-                                    .background(Color.green)
-                                    .cornerRadius(8)
-                                }
+                                Image(systemName: "magnifyingglass")
+                                    .foregroundColor(.secondary)
+                                TextField("Search albums", text: $searchText)
+                                    .textFieldStyle(PlainTextFieldStyle())
                             }
-                            .padding()
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
                             .background(Color(.systemGray6))
+                            .cornerRadius(10)
+                            
+                            // Media Type Picker
+                            Picker("Media Type", selection: $showingVideosOnly) {
+                                Text("Videos Only").tag(true)
+                                Text("Photos & Videos").tag(false)
+                            }
+                            .pickerStyle(SegmentedPickerStyle())
                         }
-                    }
-                    .padding()
-                    .padding(.top, 20) // Extra top padding for full screen
-                    
-                    if selectedAlbum == nil {
-                        // Empty State
-                        VStack(spacing: 20) {
-                            Image(systemName: "photo.on.rectangle.angled")
-                                .font(.system(size: 60))
-                                .foregroundColor(.secondary)
-                            Text("Select an album to view photos and videos")
-                                .font(.title3)
-                                .foregroundColor(.secondary)
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    } else if isLoadingMedia {
-                        // Loading State
-                        VStack(spacing: 20) {
-                            ProgressView()
-                                .scaleEffect(1.5)
-                            Text("Loading media...")
-                                .font(.headline)
-                                .foregroundColor(.secondary)
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    } else if mediaItems.isEmpty {
-                        // No Media State
-                        VStack(spacing: 20) {
-                            Image(systemName: showingVideosOnly ? "video.slash" : "photo")
-                                .font(.system(size: 60))
-                                .foregroundColor(.secondary)
-                            Text(showingVideosOnly ? "No videos in this album" : "No media in this album")
-                                .font(.title3)
-                                .foregroundColor(.secondary)
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    } else {
-                        // Media Grid
+                        .padding()
+                        .padding(.top, 20)
+                        
+                        Divider()
+                        
+                        // Albums List
                         ScrollView {
-                            LazyVGrid(columns: createColumns(for: geometry.size.width - sidebarWidth), spacing: 4) {
-                                ForEach(mediaItems) { item in
-                                    FullScreenMediaThumbnailView(
-                                        mediaItem: item,
-                                        photoLibraryManager: photoLibraryManager,
-                                        isMultiSelectMode: isMultiSelectMode,
-                                        isSelected: selectedMedia.contains(item.id)
+                            LazyVStack(spacing: 0) {
+                                ForEach(filteredAlbums) { album in
+                                    AlbumSidebarRow(
+                                        album: album,
+                                        isSelected: selectedAlbum?.id == album.id,
+                                        showingVideosOnly: showingVideosOnly
                                     ) {
-                                        if isMultiSelectMode {
-                                            toggleSelection(for: item)
-                                        } else {
-                                            if item.isVideo {
-                                                onVideoSelected(item.asset)
-                                                dismiss()
-                                            }
+                                        selectedAlbum = album
+                                        Task {
+                                            await loadAlbumMedia(album)
                                         }
                                     }
                                 }
                             }
-                            .padding(8)
+                        }
+                        
+                        Spacer()
+                    }
+                    .frame(width: sidebarWidth)
+                    .background(Color(.systemGray6))
+                    
+                    Divider()
+                    
+                    // Main Content Area
+                    VStack(spacing: 0) {
+                        // Main Header
+                        VStack(spacing: 12) {
+                            HStack {
+                                Text(selectedAlbum?.title ?? "Select an Album")
+                                    .font(.title2)
+                                    .fontWeight(.semibold)
+                                
+                                Spacer()
+                            }
+                        }
+                        .padding()
+                        .padding(.top, 20)
+                        
+                        if selectedAlbum == nil {
+                            // Empty State
+                            VStack(spacing: 20) {
+                                Image(systemName: "photo.on.rectangle.angled")
+                                    .font(.system(size: 60))
+                                    .foregroundColor(.secondary)
+                                Text("Select an album to view photos and videos")
+                                    .font(.title3)
+                                    .foregroundColor(.secondary)
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        } else if isLoadingMedia {
+                            // Loading State
+                            VStack(spacing: 20) {
+                                ProgressView()
+                                    .scaleEffect(1.5)
+                                Text("Loading media...")
+                                    .font(.headline)
+                                    .foregroundColor(.secondary)
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        } else if mediaItems.isEmpty {
+                            // No Media State
+                            VStack(spacing: 20) {
+                                Image(systemName: showingVideosOnly ? "video.slash" : "photo")
+                                    .font(.system(size: 60))
+                                    .foregroundColor(.secondary)
+                                Text(showingVideosOnly ? "No videos in this album" : "No media in this album")
+                                    .font(.title3)
+                                    .foregroundColor(.secondary)
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        } else {
+                            // Media Grid
+                            ScrollView {
+                                LazyVGrid(columns: createColumns(for: geometry.size.width - sidebarWidth), spacing: 4) {
+                                    ForEach(mediaItems) { item in
+                                        FullScreenMediaThumbnailView(
+                                            mediaItem: item,
+                                            photoLibraryManager: photoLibraryManager,
+                                            isSelected: selectedMedia.contains(item.id)
+                                        ) {
+                                            toggleSelection(for: item)
+                                        }
+                                    }
+                                }
+                                .padding(8)
+                                .padding(.bottom, 100) // Space for floating buttons
+                            }
                         }
                     }
+                }
+            }
+            
+            // Floating Selection UI
+            VStack {
+                Spacer()
+                
+                if !selectedMedia.isEmpty {
+                    HStack {
+                        // Selection Counter
+                        HStack(spacing: 8) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.blue)
+                            Text("\(selectedMedia.count) selected")
+                                .font(.headline)
+                                .foregroundColor(.blue)
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
+                        .background(Color(.systemBackground))
+                        .cornerRadius(25)
+                        .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 2)
+                        
+                        Spacer()
+                        
+                        // Done Button
+                        Button("Done") {
+                            handleDoneButtonTap()
+                        }
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 12)
+                        .background(Color.blue)
+                        .cornerRadius(25)
+                        .shadow(color: .blue.opacity(0.3), radius: 8, x: 0, y: 2)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 34) // Safe area bottom
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .animation(.easeInOut(duration: 0.3), value: selectedMedia.isEmpty)
                 }
             }
         }
@@ -255,6 +254,7 @@ struct FullScreenMediaSelectionView: View {
             Task {
                 selectedAlbum = nil
                 mediaItems = []
+                selectedMedia.removeAll() // Clear selections when switching modes
                 if newValue {
                     await photoLibraryManager.fetchVideoAlbums()
                 } else {
@@ -284,7 +284,7 @@ struct FullScreenMediaSelectionView: View {
     private func createColumns(for width: CGFloat) -> [GridItem] {
         let itemSize: CGFloat = 120
         let spacing: CGFloat = 4
-        let availableWidth = width - 16 // Account for padding
+        let availableWidth = width - 16
         let itemsPerRow = max(3, Int(availableWidth / (itemSize + spacing)))
         
         return Array(repeating: GridItem(.flexible(), spacing: spacing), count: itemsPerRow)
@@ -292,6 +292,7 @@ struct FullScreenMediaSelectionView: View {
     
     private func loadAlbumMedia(_ album: PhotoAlbum) async {
         isLoadingMedia = true
+        selectedMedia.removeAll() // Clear selections when switching albums
         
         if showingVideosOnly {
             let videos = await photoLibraryManager.fetchVideos(from: album)
@@ -304,10 +305,33 @@ struct FullScreenMediaSelectionView: View {
     }
     
     private func toggleSelection(for item: MediaItem) {
+        // Allow selection of both photos and videos now
         if selectedMedia.contains(item.id) {
             selectedMedia.remove(item.id)
         } else {
             selectedMedia.insert(item.id)
+        }
+        
+        // Add haptic feedback
+        let generator = UIImpactFeedbackGenerator(style: .light)
+        generator.impactOccurred()
+    }
+    
+    private func handleDoneButtonTap() {
+        let allAssets = selectedAllAssets
+        let videoAssets = selectedVideoAssets
+        let photoAssets = selectedPhotoAssets
+        
+        if allAssets.count == 1 {
+            // Single item selection
+            let singleAsset = allAssets.first!
+            onVideoSelected(singleAsset) // We'll rename this to onMediaSelected later
+            dismiss()
+        } else if allAssets.count > 1 {
+            // Multiple item selection - show naming dialog
+            pendingAssets = allAssets
+            collectionName = "My Media Collection"
+            showingNameDialog = true
         }
     }
 }
@@ -396,7 +420,6 @@ struct AlbumSidebarRow: View {
 struct FullScreenMediaThumbnailView: View {
     let mediaItem: MediaItem
     let photoLibraryManager: PhotoLibraryManager
-    let isMultiSelectMode: Bool
     let isSelected: Bool
     let onTap: () -> Void
     
@@ -425,55 +448,51 @@ struct FullScreenMediaThumbnailView: View {
                 )
             
             // Selection overlay
-            if isMultiSelectMode {
+            VStack {
+                HStack {
+                    ZStack {
+                        Circle()
+                            .fill(isSelected ? Color.blue : Color.black.opacity(0.5))
+                            .frame(width: 24, height: 24)
+                        
+                        if isSelected {
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundColor(.white)
+                        }
+                    }
+                    .padding(.top, 6)
+                    .padding(.leading, 6)
+                    Spacer()
+                }
+                Spacer()
+            }
+            
+            // Media type indicator
+            if mediaItem.isVideo {
+                Image(systemName: "play.circle.fill")
+                    .font(.title3)
+                    .foregroundColor(.white)
+                    .background(Color.black.opacity(0.5))
+                    .clipShape(Circle())
+            } else {
                 VStack {
                     HStack {
-                        ZStack {
-                            Circle()
-                                .fill(isSelected ? Color.blue : Color.black.opacity(0.5))
-                                .frame(width: 24, height: 24)
-                            
-                            if isSelected {
-                                Image(systemName: "checkmark")
-                                    .font(.system(size: 12, weight: .bold))
-                                    .foregroundColor(.white)
-                            }
-                        }
-                        .padding(.top, 6)
-                        .padding(.leading, 6)
                         Spacer()
+                        Image(systemName: "photo")
+                            .font(.caption2)
+                            .foregroundColor(.white)
+                            .padding(3)
+                            .background(Color.black.opacity(0.5))
+                            .clipShape(Circle())
+                            .padding(.top, 4)
+                            .padding(.trailing, 4)
                     }
                     Spacer()
                 }
             }
             
-            // Media type indicator
-            if !isMultiSelectMode {
-                if mediaItem.isVideo {
-                    Image(systemName: "play.circle.fill")
-                        .font(.title3)
-                        .foregroundColor(.white)
-                        .background(Color.black.opacity(0.5))
-                        .clipShape(Circle())
-                } else {
-                    VStack {
-                        HStack {
-                            Spacer()
-                            Image(systemName: "photo")
-                                .font(.caption2)
-                                .foregroundColor(.white)
-                                .padding(3)
-                                .background(Color.black.opacity(0.5))
-                                .clipShape(Circle())
-                                .padding(.top, 4)
-                                .padding(.trailing, 4)
-                        }
-                        Spacer()
-                    }
-                }
-            }
-            
-            // Duration badge (for videos)
+            // Duration badge (for videos only)
             if mediaItem.isVideo {
                 VStack {
                     Spacer()
@@ -494,20 +513,10 @@ struct FullScreenMediaThumbnailView: View {
                     }
                 }
             }
-            
-            // Non-video overlay
-            if !mediaItem.isVideo && !isMultiSelectMode {
-                Color.black.opacity(0.3)
-                    .clipShape(RoundedRectangle(cornerRadius: 4))
-            }
         }
         .contentShape(Rectangle())
         .onTapGesture {
-            if mediaItem.isVideo || isMultiSelectMode {
-                let generator = UIImpactFeedbackGenerator(style: .light)
-                generator.impactOccurred()
-                onTap()
-            }
+            onTap()
         }
         .task(id: mediaItem.id) {
             if thumbnailImage == nil {
