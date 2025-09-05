@@ -16,6 +16,11 @@ struct PhotoCollectionView: View {
     @State private var photos: [UIImage] = []
     @State private var isLoading = true
     @StateObject private var soundPlayer = SoundPlayer.shared
+
+    @State private var isBouncing = false
+    @State private var showRipple = false
+    @State private var rippleScale: CGFloat = 0.5
+    @State private var rippleOpacity: Double = 0.0
     
     private var photoAssets: [PHAsset] {
         return activity.photoAssets ?? []
@@ -59,6 +64,24 @@ struct PhotoCollectionView: View {
                     .aspectRatio(contentMode: .fit)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .clipped()
+                    .contentTransition(.opacity)
+                    .animation(.easeInOut(duration: 0.28), value: currentIndex)
+                    .scaleEffect(isBouncing ? 1.05 : 1.0)
+                    .animation(.spring(response: 0.22, dampingFraction: 0.6), value: isBouncing)
+                
+                if showRipple {
+                    GeometryReader { geo in
+                        Circle()
+                            .strokeBorder(Color.white.opacity(0.7), lineWidth: 3)
+                            .frame(width: min(geo.size.width, geo.size.height) * 0.35,
+                                   height: min(geo.size.width, geo.size.height) * 0.35)
+                            .scaleEffect(rippleScale)
+                            .opacity(rippleOpacity)
+                            .position(x: geo.size.width / 2, y: geo.size.height / 2)
+                            .allowsHitTesting(false)
+                    }
+                    .transition(.opacity)
+                }
                 
                 // Photo name overlay (bottom center) - NEW
                 if let photoName = currentPhotoName {
@@ -133,6 +156,7 @@ struct PhotoCollectionView: View {
         }
         .onTapGesture {
             // Simple tap to go to next photo
+            triggerTapAnimation()
             nextPhoto()
         }
     }
@@ -188,6 +212,26 @@ struct PhotoCollectionView: View {
         
         // Simple increment with wrap-around to beginning
         currentIndex = (currentIndex + 1) % photos.count
+    }
+
+    private func triggerTapAnimation() {
+        // Bounce
+        isBouncing = true
+        withAnimation(.spring(response: 0.22, dampingFraction: 0.6)) {
+            isBouncing = false
+        }
+        
+        // Ripple
+        showRipple = true
+        rippleScale = 0.5
+        rippleOpacity = 0.6
+        withAnimation(.easeOut(duration: 0.55)) {
+            rippleScale = 1.6
+            rippleOpacity = 0.0
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+            showRipple = false
+        }
     }
 }
 
