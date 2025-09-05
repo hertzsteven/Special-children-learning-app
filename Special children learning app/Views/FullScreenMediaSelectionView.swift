@@ -12,7 +12,7 @@ struct FullScreenMediaSelectionView: View {
     @StateObject private var photoLibraryManager = PhotoLibraryManager()
     @Environment(\.dismiss) private var dismiss
     let onVideoSelected: (PHAsset) -> Void
-    let onMultipleVideosSelected: ([PHAsset], String) -> Void
+    let onIndividualMediaSelected: ([MediaItemForNaming], String) -> Void // Updated signature
     
     @State private var showingVideosOnly = true
     @State private var selectedAlbum: PhotoAlbum?
@@ -22,8 +22,7 @@ struct FullScreenMediaSelectionView: View {
     
     // Multi-selection state - always enabled now
     @State private var selectedMedia: Set<String> = []
-    @State private var showingNameDialog = false
-    @State private var collectionName = ""
+    @State private var showingIndividualNaming = false // Show individual naming view
     @State private var pendingAssets: [PHAsset] = []
     
     private let sidebarWidth: CGFloat = 280
@@ -54,6 +53,15 @@ struct FullScreenMediaSelectionView: View {
                 $0.title.localizedCaseInsensitiveContains(searchText)
             }
         }
+    }
+    
+    // Updated initializer
+    init(
+        onVideoSelected: @escaping (PHAsset) -> Void,
+        onIndividualMediaSelected: @escaping ([MediaItemForNaming], String) -> Void
+    ) {
+        self.onVideoSelected = onVideoSelected
+        self.onIndividualMediaSelected = onIndividualMediaSelected
     }
     
     var body: some View {
@@ -262,22 +270,37 @@ struct FullScreenMediaSelectionView: View {
                 }
             }
         }
-        .alert("Name Your Collection", isPresented: $showingNameDialog) {
-            TextField("Collection name", text: $collectionName)
-                .textInputAutocapitalization(.words)
-            
-            Button("Create") {
-                onMultipleVideosSelected(pendingAssets, collectionName)
-                dismiss()
+        // Individual naming sheet
+        .sheet(isPresented: $showingIndividualNaming) {
+            if !pendingAssets.isEmpty {
+                IndividualMediaNamingView(
+                    mediaItems: IndividualMediaNamingView.createFromAssets(pendingAssets),
+                    onCollectionComplete: { namedItems, collectionName in
+                        onIndividualMediaSelected(namedItems, collectionName)
+                        dismiss()
+                    },
+                    onCancel: {
+                        showingIndividualNaming = false
+                        pendingAssets = []
+                    }
+                )
+            } else {
+                // Fallback view if no assets
+                VStack(spacing: 20) {
+                    Text("No media selected")
+                        .font(.title2)
+                    
+                    Button("Close") {
+                        showingIndividualNaming = false
+                        pendingAssets = []
+                    }
+                    .padding()
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+                }
+                .padding()
             }
-            .disabled(collectionName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-            
-            Button("Cancel", role: .cancel) {
-                pendingAssets = []
-                collectionName = ""
-            }
-        } message: {
-            Text("Give your video collection a memorable name")
         }
     }
     
@@ -319,19 +342,26 @@ struct FullScreenMediaSelectionView: View {
     
     private func handleDoneButtonTap() {
         let allAssets = selectedAllAssets
-        let videoAssets = selectedVideoAssets
-        let photoAssets = selectedPhotoAssets
+        print("handleDoneButtonTap called with \(allAssets.count) selected assets")
+        print("selectedMedia set contains: \(selectedMedia)")
+        print("mediaItems count: \(mediaItems.count)")
         
         if allAssets.count == 1 {
-            // Single item selection
+            // Single item selection - still use the old flow
             let singleAsset = allAssets.first!
-            onVideoSelected(singleAsset) // We'll rename this to onMediaSelected later
+            print("Single asset selected: \(singleAsset.localIdentifier)")
+            onVideoSelected(singleAsset)
             dismiss()
         } else if allAssets.count > 1 {
-            // Multiple item selection - show naming dialog
+            // Multiple items - automatically go to individual naming
+            print("Multiple assets selected, opening individual naming with \(allAssets.count) assets")
             pendingAssets = allAssets
-            collectionName = "My Media Collection"
-            showingNameDialog = true
+            // Add a small delay to ensure pendingAssets is set before showing sheet
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                showingIndividualNaming = true
+            }
+        } else {
+            print("No assets selected!")
         }
     }
 }
@@ -544,9 +574,12 @@ struct FullScreenMediaThumbnailView: View {
 }
 
 #Preview {
-    FullScreenMediaSelectionView { asset in
-        print("Selected video: \(asset.localIdentifier)")
-    } onMultipleVideosSelected: { assets, name in
-        print("Selected \(assets.count) videos for collection: \(name)")
-    }
+    FullScreenMediaSelectionView(
+        onVideoSelected: { asset in
+            print("Selected single media: \(asset.localIdentifier)")
+        },
+        onIndividualMediaSelected: { namedItems, collectionName in
+            print("Selected \(namedItems.count) individually named items")
+        }
+    )
 }

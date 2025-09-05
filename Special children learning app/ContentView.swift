@@ -153,7 +153,7 @@ struct ContentView: View {
         .fullScreenCover(isPresented: $showingVideoSelection) {
             FullScreenMediaSelectionView(
                 onVideoSelected: { selectedAsset in
-                    // Handle both photos and videos
+                    // Handle single photos and videos
                     if selectedAsset.mediaType == .video {
                         // Show naming dialog for single video
                         pendingSingleAsset = selectedAsset
@@ -166,9 +166,9 @@ struct ContentView: View {
                         showingSingleVideoNameDialog = true
                     }
                 },
-                onMultipleVideosSelected: { selectedAssets, collectionName in
-                    // Handle mixed media collections
-                    addMixedMediaCollection(from: selectedAssets, name: collectionName)
+                onIndividualMediaSelected: { namedItems, collectionName in
+                    // Handle the new collection creation
+                    addNamedMediaCollection(namedItems: namedItems, collectionName: collectionName)
                 }
             )
         }
@@ -265,15 +265,20 @@ struct ContentView: View {
         singleVideoName = ""
     }
     
-    private func addMixedMediaCollection(from assets: [PHAsset], name: String) {
-        let cleanName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+    private func addNamedMediaCollection(namedItems: [MediaItemForNaming], collectionName: String) {
+        print("Creating collection '\(collectionName)' with \(namedItems.count) named items")
+        
+        let cleanName = collectionName.trimmingCharacters(in: .whitespacesAndNewlines)
         let finalName = cleanName.isEmpty ? "My Media Collection" : cleanName
+        
+        // Extract all assets
+        let assets = namedItems.map { $0.asset }
         let identifiers = assets.map { $0.localIdentifier }
         
         let videoAssets = assets.filter { $0.mediaType == .video }
         let photoAssets = assets.filter { $0.mediaType == .image }
         
-        // Save to persistence
+        // Save to persistence as a single collection
         persistence.saveCollection(
             title: finalName,
             assetIdentifiers: identifiers,
@@ -281,22 +286,25 @@ struct ContentView: View {
             backgroundColor: "warmBeige"
         )
         
-        // Add to current session
+        // Create one ActivityItem containing all the media
         let newActivity = ActivityItem(
             title: finalName,
             imageName: "rectangle.stack",
             videoAssets: videoAssets.isEmpty ? nil : videoAssets,
             photoAssets: photoAssets.isEmpty ? nil : photoAssets,
-            audioDescription: "A collection of \(assets.count) items from your library",
+            audioDescription: "A collection of \(assets.count) items: \(namedItems.map { $0.customName }.joined(separator: ", "))",
             backgroundColor: "warmBeige"
         )
+        
         customVideos.append(newActivity)
         
         // Show confirmation
         toastMessage = "'\(finalName)' created with \(assets.count) items!"
         showToast = true
+        
+        print("Collection created successfully with \(assets.count) items")
     }
-    
+
     private func deleteCustomVideo(_ activity: ActivityItem) {
         // Remove from current session
         customVideos.removeAll { $0.id == activity.id }
