@@ -87,7 +87,9 @@ struct IndividualMediaNamingView: View {
     }
     
     private var progressText: String {
-        "\(currentIndex + 1) of \(workingItems.count)"
+        if workingItems.isEmpty { return "0 of 0" }
+        let clampedIndex = min(currentIndex, max(workingItems.count - 1, 0))
+        return "\(clampedIndex + 1) of \(workingItems.count)"
     }
     
     private var canProceedToNext: Bool {
@@ -525,7 +527,6 @@ struct IndividualMediaNamingView: View {
     private var bottomControlsView: some View {
         HStack(spacing: 16) {
             if currentItem != nil {
-                // Skip button
                 Button("Skip") {
                     skipCurrentAndProceed()
                 }
@@ -535,11 +536,10 @@ struct IndividualMediaNamingView: View {
                 .padding(.vertical, 12)
                 .background(Color(.systemGray6))
                 .cornerRadius(25)
-                
+
                 Spacer()
-                
-                // Next/Save button
-                Button(currentIndex == workingItems.count - 1 ? "Save All" : "Next") {
+
+                Button(currentIndex == workingItems.count - 1 ? "Next: Name Collection" : "Next") {
                     saveCurrentAndProceed()
                 }
                 .font(.subheadline)
@@ -551,18 +551,6 @@ struct IndividualMediaNamingView: View {
                 .cornerRadius(25)
                 .disabled(!canProceedToNext)
             } else {
-                Spacer()
-                
-                Button("Complete") {
-                    completeNaming()
-                }
-                .font(.subheadline)
-                .fontWeight(.semibold)
-                .foregroundColor(.white)
-                .padding(.horizontal, 32)
-                .padding(.vertical, 12)
-                .background(Color.green)
-                .cornerRadius(25)
             }
         }
         .padding()
@@ -618,34 +606,8 @@ struct IndividualMediaNamingView: View {
             currentIndex += 1
             loadCurrentItem()
         } else {
-            // Finished with all items
             currentIndex = workingItems.count
-        }
-    }
-    
-    private func loadCurrentItem() {
-        guard let item = currentItem else { return }
-        
-        currentName = item.customName
-        thumbnailImage = nil
-        
-        // Add a small delay to ensure the view is ready, then focus the text field
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            // This will help ensure the keyboard appears and field is ready for input
-        }
-        
-        Task {
-            isLoadingThumbnail = true
-            
-            let image = await photoLibraryManager.loadThumbnail(
-                for: item.asset,
-                targetSize: CGSize(width: 400, height: 400)
-            )
-            
-            await MainActor.run {
-                self.thumbnailImage = image
-                self.isLoadingThumbnail = false
-            }
+            showingCollectionNaming = true
         }
     }
 
@@ -656,9 +618,30 @@ struct IndividualMediaNamingView: View {
         onCollectionComplete(namedItems, cleanCollectionName)
     }
 
-    private func completeNaming() {
-        // Instead of calling onComplete, transition to collection naming
-        currentIndex = workingItems.count // This triggers the collection naming transition
+    // RE-ADD: loadCurrentItem() helper to fix missing symbol error
+    private func loadCurrentItem() {
+        guard let item = currentItem else { return }
+
+        currentName = item.customName
+        thumbnailImage = nil
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            // Intentionally left empty for focus timing if needed
+        }
+
+        Task {
+            isLoadingThumbnail = true
+
+            let image = await photoLibraryManager.loadThumbnail(
+                for: item.asset,
+                targetSize: CGSize(width: 400, height: 400)
+            )
+
+            await MainActor.run {
+                self.thumbnailImage = image
+                self.isLoadingThumbnail = false
+            }
+        }
     }
     
     static func createFromAssets(_ assets: [PHAsset]) -> [MediaItemForNaming] {
