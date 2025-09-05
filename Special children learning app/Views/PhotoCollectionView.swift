@@ -21,6 +21,13 @@ struct PhotoCollectionView: View {
         return activity.photoAssets ?? []
     }
     
+    // NEW: Get the current photo's name
+    private var currentPhotoName: String? {
+        guard currentIndex < photoAssets.count else { return nil }
+        let currentAsset = photoAssets[currentIndex]
+        return activity.getMediaItemName(for: currentAsset)
+    }
+    
     var body: some View {
         ZStack {
             Color.black
@@ -53,6 +60,36 @@ struct PhotoCollectionView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .clipped()
                 
+                // Photo name overlay (bottom center) - NEW
+                if let photoName = currentPhotoName {
+                    VStack {
+                        Spacer()
+                        
+                        HStack {
+                            Spacer()
+                            
+                            Text(photoName)
+                                .font(.title2)
+                                .fontWeight(.medium)
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 20)
+                                .padding(.vertical, 12)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .fill(Color.black.opacity(0.7))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 20)
+                                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                        )
+                                )
+                                .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 2)
+                            
+                            Spacer()
+                        }
+                        .padding(.bottom, 80) // Space from bottom
+                    }
+                }
+                
                 // Close button (top right)
                 VStack {
                     HStack {
@@ -66,6 +103,26 @@ struct PhotoCollectionView: View {
                         }
                         .padding()
                     }
+                    Spacer()
+                }
+                
+                // Photo counter (top center) - NEW
+                VStack {
+                    HStack {
+                        Spacer()
+                        
+                        Text("\(currentIndex + 1) of \(photos.count)")
+                            .font(.caption)
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(Color.black.opacity(0.6))
+                            .cornerRadius(12)
+                        
+                        Spacer()
+                    }
+                    .padding(.top, 60) // Below status bar
+                    
                     Spacer()
                 }
             }

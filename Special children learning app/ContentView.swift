@@ -273,25 +273,30 @@ struct ContentView: View {
         
         // Extract all assets
         let assets = namedItems.map { $0.asset }
-        let identifiers = assets.map { $0.localIdentifier }
         
         let videoAssets = assets.filter { $0.mediaType == .video }
         let photoAssets = assets.filter { $0.mediaType == .image }
         
-        // Save to persistence as a single collection
-        persistence.saveCollection(
+        // Create SavedMediaItem objects with individual names
+        let savedMediaItems = namedItems.map { item in
+            SavedMediaItem(assetIdentifier: item.asset.localIdentifier, customName: item.customName)
+        }
+        
+        // Save to persistence with individual names
+        persistence.saveCollectionWithMediaItems(
             title: finalName,
-            assetIdentifiers: identifiers,
+            mediaItems: savedMediaItems,
             imageName: "rectangle.stack",
             backgroundColor: "warmBeige"
         )
         
-        // Create one ActivityItem containing all the media
+        // Create one ActivityItem containing all the media (we'll need to modify this to include names)
         let newActivity = ActivityItem(
             title: finalName,
             imageName: "rectangle.stack",
             videoAssets: videoAssets.isEmpty ? nil : videoAssets,
             photoAssets: photoAssets.isEmpty ? nil : photoAssets,
+            mediaItems: savedMediaItems, // NEW: Pass the named items
             audioDescription: "A collection of \(assets.count) items: \(namedItems.map { $0.customName }.joined(separator: ", "))",
             backgroundColor: "warmBeige"
         )

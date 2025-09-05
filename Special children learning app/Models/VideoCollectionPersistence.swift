@@ -8,17 +8,48 @@
 import Foundation
 import Photos
 
+// MARK: - Individual Media Item with Name
+struct SavedMediaItem: Codable, Identifiable, Hashable {
+    let id: UUID
+    let assetIdentifier: String
+    let customName: String
+    
+    init(assetIdentifier: String, customName: String) {
+        self.id = UUID()
+        self.assetIdentifier = assetIdentifier
+        self.customName = customName
+    }
+    
+    // Hashable conformance
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+        hasher.combine(assetIdentifier)
+        hasher.combine(customName)
+    }
+    
+    static func == (lhs: SavedMediaItem, rhs: SavedMediaItem) -> Bool {
+        return lhs.id == rhs.id && lhs.assetIdentifier == rhs.assetIdentifier
+    }
+}
+
 // MARK: - Codable Models for Persistence
 struct SavedVideoCollection: Codable, Identifiable {
     let id: UUID
     let title: String
     let imageName: String
-    let assetIdentifiers: [String]
+    let assetIdentifiers: [String] // Keep for backward compatibility
+    let mediaItems: [SavedMediaItem]? // NEW: Individual media with names
     let backgroundColor: String
     let createdDate: Date
     
     var audioDescription: String {
-        "A collection of \(assetIdentifiers.count) videos from your library"
+        let count = mediaItems?.count ?? assetIdentifiers.count
+        return "A collection of \(count) items from your library"
+    }
+    
+    // Computed property to get all identifiers (for backward compatibility)
+    var allAssetIdentifiers: [String] {
+        return mediaItems?.map { $0.assetIdentifier } ?? assetIdentifiers
     }
 }
 
@@ -48,6 +79,23 @@ class VideoCollectionPersistence: ObservableObject {
             title: title,
             imageName: imageName,
             assetIdentifiers: assetIdentifiers,
+            mediaItems: nil, // Legacy method - no individual names
+            backgroundColor: backgroundColor,
+            createdDate: Date()
+        )
+        
+        savedCollections.append(collection)
+        saveCollections()
+    }
+    
+    // NEW: Save collection with individual media names
+    func saveCollectionWithMediaItems(title: String, mediaItems: [SavedMediaItem], imageName: String = "rectangle.stack", backgroundColor: String = "warmBeige") {
+        let collection = SavedVideoCollection(
+            id: UUID(),
+            title: title,
+            imageName: imageName,
+            assetIdentifiers: [], // Empty for new format
+            mediaItems: mediaItems,
             backgroundColor: backgroundColor,
             createdDate: Date()
         )
@@ -68,6 +116,7 @@ class VideoCollectionPersistence: ObservableObject {
                 title: newTitle,
                 imageName: collection.imageName,
                 assetIdentifiers: collection.assetIdentifiers,
+                mediaItems: collection.mediaItems, // Add this missing parameter
                 backgroundColor: collection.backgroundColor,
                 createdDate: collection.createdDate
             )

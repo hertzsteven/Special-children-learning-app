@@ -385,6 +385,34 @@ struct IndividualMediaNamingView: View {
                         .clipShape(Circle())
                 }
             }
+            
+            // Current name display - NEW: Elegant subdued style
+            if !item.customName.isEmpty {
+                VStack(spacing: 4) {
+                    Text("Current name:")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                        .textCase(.uppercase)
+                        .tracking(0.5)
+                    
+                    Text(item.customName)
+                        .font(.subheadline)
+                        .foregroundColor(.primary)
+                        .fontWeight(.medium)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color(.systemGray6))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(Color(.systemGray4), lineWidth: 0.5)
+                                )
+                        )
+                        .multilineTextAlignment(.center)
+                }
+                .padding(.top, 4)
+            }
         }
     }
     
@@ -410,10 +438,18 @@ struct IndividualMediaNamingView: View {
                         .foregroundColor(.secondary)
                 }
                 
+                // Enhanced TextField with better styling
                 TextField("Enter a name...", text: $currentName)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .textFieldStyle(.roundedBorder)
+                    .font(.body)
                     .textInputAutocapitalization(.words)
                     .submitLabel(.next)
+                    .padding(.vertical, 4) // Add some padding
+                    .background(Color(.systemBackground)) // Ensure background is visible
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(currentName.isEmpty ? Color.red.opacity(0.3) : Color.blue.opacity(0.3), lineWidth: 1)
+                    )
                     .onSubmit {
                         if canProceedToNext {
                             saveCurrentAndProceed()
@@ -425,6 +461,13 @@ struct IndividualMediaNamingView: View {
                             currentName = String(newValue.prefix(50))
                         }
                     }
+                
+                // Helper text if field is empty
+                if currentName.isEmpty {
+                    Text("Please enter a name to continue")
+                        .font(.caption)
+                        .foregroundColor(.red.opacity(0.7))
+                }
             }
             
             // Suggested names
@@ -585,6 +628,11 @@ struct IndividualMediaNamingView: View {
         
         currentName = item.customName
         thumbnailImage = nil
+        
+        // Add a small delay to ensure the view is ready, then focus the text field
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            // This will help ensure the keyboard appears and field is ready for input
+        }
         
         Task {
             isLoadingThumbnail = true
