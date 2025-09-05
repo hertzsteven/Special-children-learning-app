@@ -24,6 +24,9 @@ struct ContentView: View {
     @State private var showingRenameDialog = false
     @State private var renameText = ""
     @State private var activityToRename: ActivityItem?
+    @State private var showingCollectionSelection = false
+    @State private var selectedActivityForSelection: ActivityItem?
+    @State private var filteredActivityForViewing: ActivityItem?
     
     @StateObject private var persistence = VideoCollectionPersistence.shared
     
@@ -93,8 +96,16 @@ struct ContentView: View {
                     LazyVGrid(columns: columns, spacing: 24) {
                         ForEach(allActivities) { activity in
                             ActivityCardView(activity: activity) {
-                                selectedActivity = activity
-                                showingVideo = true
+                                // NEW: Show selection view for collections, direct view for single items
+                                if activity.isVideoCollection || activity.isPhotoCollection || activity.isMixedMediaCollection {
+                                    // Show selection interface for collections
+                                    selectedActivityForSelection = activity
+                                    showingCollectionSelection = true
+                                } else {
+                                    // Direct view for single items
+                                    selectedActivity = activity
+                                    showingVideo = true
+                                }
                             }
                             .contextMenu {
                                 // Add context menu for custom videos
@@ -147,6 +158,26 @@ struct ContentView: View {
                         selectedActivity = nil
                     }
                 }
+            }
+            
+            // NEW: Collection Selection Overlay
+            if showingCollectionSelection, let activity = selectedActivityForSelection {
+                CollectionItemSelectionView(
+                    activity: activity,
+                    onDismiss: {
+                        showingCollectionSelection = false
+                        selectedActivityForSelection = nil
+                    },
+                    onSelectionComplete: { filteredActivity in
+                        // Close selection view and open media viewer with filtered items
+                        showingCollectionSelection = false
+                        selectedActivityForSelection = nil
+                        
+                        // Set up for viewing the filtered activity
+                        selectedActivity = filteredActivity
+                        showingVideo = true
+                    }
+                )
             }
         }
         .preferredColorScheme(.light) // Always use light mode for consistency

@@ -152,7 +152,10 @@ class VideoCollectionPersistence: ObservableObject {
         var activityItems: [ActivityItem] = []
         
         for collection in savedCollections {
-            if let validAssets = await getValidAssets(from: collection.assetIdentifiers), !validAssets.isEmpty {
+            // Use the computed property that handles both old and new formats
+            let identifiersToFetch = collection.allAssetIdentifiers
+            
+            if let validAssets = await getValidAssets(from: identifiersToFetch), !validAssets.isEmpty {
                 
                 let videoAssets = validAssets.filter { $0.mediaType == .video }
                 let photoAssets = validAssets.filter { $0.mediaType == .image }
@@ -178,30 +181,35 @@ class VideoCollectionPersistence: ObservableObject {
                         backgroundColor: collection.backgroundColor
                     )
                 } else if !videoAssets.isEmpty && photoAssets.isEmpty {
-                    // Video collection
+                    // Video collection - NOW includes mediaItems
                     activityItem = ActivityItem(
                         title: collection.title,
                         imageName: collection.imageName,
                         videoAssets: videoAssets,
+                        photoAssets: nil,
+                        mediaItems: collection.mediaItems,
                         audioDescription: collection.audioDescription,
                         backgroundColor: collection.backgroundColor
                     )
                 } else if videoAssets.isEmpty && !photoAssets.isEmpty {
-                    // Photo collection
+                    // Photo collection - NOW includes mediaItems
                     activityItem = ActivityItem(
                         title: collection.title,
                         imageName: collection.imageName,
+                        videoAssets: nil,
                         photoAssets: photoAssets,
+                        mediaItems: collection.mediaItems,
                         audioDescription: collection.audioDescription,
                         backgroundColor: collection.backgroundColor
                     )
                 } else {
-                    // Mixed media collection
+                    // Mixed media collection - NOW includes mediaItems
                     activityItem = ActivityItem(
                         title: collection.title,
                         imageName: collection.imageName,
                         videoAssets: videoAssets.isEmpty ? nil : videoAssets,
                         photoAssets: photoAssets.isEmpty ? nil : photoAssets,
+                        mediaItems: collection.mediaItems,
                         audioDescription: collection.audioDescription,
                         backgroundColor: collection.backgroundColor
                     )

@@ -23,11 +23,11 @@ struct ActivityItem: Identifiable, Hashable {
     let backgroundColor: String
     
     var isVideoCollection: Bool {
-        return videoAssets != nil && (videoAssets?.count ?? 0) > 1
+        return videoAssets != nil && (videoAssets?.count ?? 0) >= 1  // Changed from > 1 to >= 1
     }
     
     var isPhotoCollection: Bool {
-        return photoAssets != nil && (photoAssets?.count ?? 0) > 1
+        return photoAssets != nil && (photoAssets?.count ?? 0) >= 1  // Changed from > 1 to >= 1
     }
     
     var isMixedMediaCollection: Bool {
