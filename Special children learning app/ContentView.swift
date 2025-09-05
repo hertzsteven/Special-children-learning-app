@@ -28,6 +28,9 @@ struct ContentView: View {
     @State private var selectedActivityForSelection: ActivityItem?
     @State private var filteredActivityForViewing: ActivityItem?
     
+    @State private var showingDeleteConfirm = false
+    @State private var activityToDelete: ActivityItem?
+
     @StateObject private var persistence = VideoCollectionPersistence.shared
     
     let columns = [
@@ -111,7 +114,8 @@ struct ContentView: View {
                                 // Add context menu for custom videos
                                 if customVideos.contains(where: { $0.id == activity.id }) {
                                     Button("Delete Collection", role: .destructive) {
-                                        deleteCustomVideo(activity)
+                                        activityToDelete = activity
+                                        showingDeleteConfirm = true
                                     }
                                     
                                     Button("Rename Collection") {
@@ -242,6 +246,19 @@ struct ContentView: View {
         } message: {
             Text("Enter a new name for your collection")
         }
+        .alert("Delete Collection?", isPresented: $showingDeleteConfirm) {
+            Button("Delete", role: .destructive) {
+                if let activity = activityToDelete {
+                    deleteCustomVideo(activity)
+                }
+                activityToDelete = nil
+            }
+            Button("Cancel", role: .cancel) {
+                activityToDelete = nil
+            }
+        } message: {
+            Text("This will remove '\(activityToDelete?.title ?? "this collection")' from your app. Your photos and videos remain in the Photos library.")
+        }
         .toast(isShowing: $showToast, message: toastMessage)
         .task {
             await loadSavedCollections()
@@ -342,14 +359,9 @@ struct ContentView: View {
     }
 
     private func deleteCustomVideo(_ activity: ActivityItem) {
-        // Remove from current session
         customVideos.removeAll { $0.id == activity.id }
         
-        // Find and delete from persistence by matching title and asset count
-        if let matchingCollection = persistence.savedCollections.first(where: { 
-            $0.title == activity.title && 
-            $0.assetIdentifiers.count == (activity.videoAssets?.count ?? (activity.videoAsset != nil ? 1 : 0))
-        }) {
+        if let matchingCollection = findMatchingSavedCollection(for: activity) {
             persistence.deleteCollection(matchingCollection)
         }
         
@@ -360,20 +372,25 @@ struct ContentView: View {
     private func renameCollection(_ activity: ActivityItem, newName: String) {
         let cleanName = newName.trimmingCharacters(in: .whitespacesAndNewlines)
         
-        // Find matching collection in persistence
-        if let matchingCollection = persistence.savedCollections.first(where: { 
-            $0.title == activity.title && 
-            $0.assetIdentifiers.count == (activity.videoAssets?.count ?? (activity.videoAsset != nil ? 1 : 0))
-        }) {
+        if let matchingCollection = findMatchingSavedCollection(for: activity) {
             // Update in persistence
             persistence.renameCollection(matchingCollection, newTitle: cleanName)
             
-            // Update in local customVideos array
+            // UPDATE: Preserve assets and mediaItems when updating local ActivityItem
             if let index = customVideos.firstIndex(where: { $0.id == activity.id }) {
                 let updatedActivity: ActivityItem
                 
-                if let videoAssets = activity.videoAssets {
-                    // Collection of videos
+                if let videoAssets = activity.videoAssets, let photoAssets = activity.photoAssets {
+                    updatedActivity = ActivityItem(
+                        title: cleanName,
+                        imageName: activity.imageName,
+                        videoAssets: videoAssets,
+                        photoAssets: photoAssets,
+                        mediaItems: activity.mediaItems,
+                        audioDescription: activity.audioDescription,
+                        backgroundColor: activity.backgroundColor
+                    )
+                } else if let videoAssets = activity.videoAssets {
                     updatedActivity = ActivityItem(
                         title: cleanName,
                         imageName: activity.imageName,
@@ -381,8 +398,15 @@ struct ContentView: View {
                         audioDescription: activity.audioDescription,
                         backgroundColor: activity.backgroundColor
                     )
+                } else if let photoAssets = activity.photoAssets {
+                    updatedActivity = ActivityItem(
+                        title: cleanName,
+                        imageName: activity.imageName,
+                        photoAssets: photoAssets,
+                        audioDescription: activity.audioDescription,
+                        backgroundColor: activity.backgroundColor
+                    )
                 } else if let videoAsset = activity.videoAsset {
-                    // Single video
                     updatedActivity = ActivityItem(
                         title: cleanName,
                         imageName: activity.imageName,
@@ -390,8 +414,15 @@ struct ContentView: View {
                         audioDescription: activity.audioDescription,
                         backgroundColor: activity.backgroundColor
                     )
+                } else if let photoAsset = activity.photoAsset {
+                    updatedActivity = ActivityItem(
+                        title: cleanName,
+                        imageName: activity.imageName,
+                        photoAsset: photoAsset,
+                        audioDescription: activity.audioDescription,
+                        backgroundColor: activity.backgroundColor
+                    )
                 } else {
-                    // Fallback for sample activities with videoFileName
                     updatedActivity = ActivityItem(
                         title: cleanName,
                         imageName: activity.imageName,
@@ -414,6 +445,43 @@ struct ContentView: View {
         // Reset state
         activityToRename = nil
         renameText = ""
+    }
+
+    private func assetIdentifiers(for activity: ActivityItem) -> [String] {
+        var ids: [String] = []
+        if let videoAssets = activity.videoAssets {
+            ids.append(contentsOf: videoAssets.map { $0.localIdentifier })
+        }
+        if let photoAssets = activity.photoAssets {
+            ids.append(contentsOf: photoAssets.map { $0.localIdentifier })
+        }
+        if let videoAsset = activity.videoAsset {
+            ids.append(videoAsset.localIdentifier)
+        }
+        if let photoAsset = activity.photoAsset {
+            ids.append(photoAsset.localIdentifier)
+        }
+        return ids
+    }
+    
+    private func findMatchingSavedCollection(for activity: ActivityItem) -> SavedVideoCollection? {
+        let activityIDs = Set(assetIdentifiers(for: activity))
+        guard !activityIDs.isEmpty else { return nil }
+        
+        // Prefer exact asset set match
+        if let exactMatch = persistence.savedCollections.first(where: { Set($0.allAssetIdentifiers) == activityIDs }) {
+            return exactMatch
+        }
+        
+        // Fallback: match by title and overlapping assets count
+        if let fallback = persistence.savedCollections.first(where: {
+            $0.title == activity.title && !$0.allAssetIdentifiers.isEmpty &&
+            Set($0.allAssetIdentifiers).intersection(activityIDs).count == activityIDs.count
+        }) {
+            return fallback
+        }
+        
+        return nil
     }
 }
 
