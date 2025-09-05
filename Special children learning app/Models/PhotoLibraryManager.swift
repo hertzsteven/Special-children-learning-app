@@ -290,6 +290,78 @@ class PhotoLibraryManager: ObservableObject {
             }
         }
     }
+
+    func fetchPhotoAlbums() async {
+        isLoading = true
+        errorMessage = nil
+        
+        do {
+            let fetchedAlbums = await withCheckedContinuation { (continuation: CheckedContinuation<[PhotoAlbum], Never>) in
+                var albumList: [PhotoAlbum] = []
+                
+                let userAlbums = PHAssetCollection.fetchAssetCollections(
+                    with: .album,
+                    subtype: .any,
+                    options: nil
+                )
+                
+                let smartAlbums = PHAssetCollection.fetchAssetCollections(
+                    with: .smartAlbum,
+                    subtype: .any,
+                    options: nil
+                )
+                
+                userAlbums.enumerateObjects { collection, _, _ in
+                    let album = PhotoAlbum(assetCollection: collection, videosOnly: false)
+                    if album.photoCount > 0 {
+                        albumList.append(album)
+                    }
+                }
+                
+                smartAlbums.enumerateObjects { collection, _, _ in
+                    let excludedSubtypes: [PHAssetCollectionSubtype] = [
+                        .smartAlbumAllHidden,
+                        .smartAlbumSelfPortraits,
+                        .smartAlbumDepthEffect
+                    ]
+                    
+                    if !excludedSubtypes.contains(collection.assetCollectionSubtype) {
+                        let album = PhotoAlbum(assetCollection: collection, videosOnly: false)
+                        if album.photoCount > 0 {
+                            albumList.append(album)
+                        }
+                    }
+                }
+                
+                continuation.resume(returning: albumList.sorted { $0.title < $1.title })
+            }
+            
+            albums = fetchedAlbums
+        } catch {
+            errorMessage = "Failed to load photo albums: \(error.localizedDescription)"
+        }
+        
+        isLoading = false
+    }
+    
+    func fetchPhotos(from album: PhotoAlbum) async -> [MediaItem] {
+        await withCheckedContinuation { continuation in
+            let fetchOptions = PHFetchOptions()
+            fetchOptions.predicate = NSPredicate(format: "mediaType == %d", PHAssetMediaType.image.rawValue)
+            fetchOptions.sortDescriptors = [
+                NSSortDescriptor(key: "creationDate", ascending: false)
+            ]
+            
+            let assets = PHAsset.fetchAssets(in: album.assetCollection, options: fetchOptions)
+            var mediaItems: [MediaItem] = []
+            
+            assets.enumerateObjects { asset, _, _ in
+                mediaItems.append(MediaItem(asset: asset))
+            }
+            
+            continuation.resume(returning: mediaItems)
+        }
+    }
 }
 
 extension PHAuthorizationStatus {

@@ -8,13 +8,20 @@
 import SwiftUI
 import Photos
 
+
+enum MediaFilter: Hashable {
+    case videos
+    case photos
+    case all
+}
+
 struct FullScreenMediaSelectionView: View {
     @StateObject private var photoLibraryManager = PhotoLibraryManager()
     @Environment(\.dismiss) private var dismiss
     let onVideoSelected: (PHAsset) -> Void
     let onIndividualMediaSelected: ([MediaItemForNaming], String) -> Void // Updated signature
     
-    @State private var showingVideosOnly = true
+    @State private var mediaFilter: MediaFilter = .videos
     @State private var selectedAlbum: PhotoAlbum?
     @State private var searchText = ""
     @State private var mediaItems: [MediaItem] = []
@@ -95,10 +102,10 @@ struct FullScreenMediaSelectionView: View {
                             .background(Color(.systemGray6))
                             .cornerRadius(10)
                             
-                            // Media Type Picker
-                            Picker("Media Type", selection: $showingVideosOnly) {
-                                Text("Videos Only").tag(true)
-                                Text("Photos & Videos").tag(false)
+                            Picker("Media Type", selection: $mediaFilter) {
+                                Text("Videos Only").tag(MediaFilter.videos)
+                                Text("Photos Only").tag(MediaFilter.photos)
+                                Text("Photos & Videos").tag(MediaFilter.all)
                             }
                             .pickerStyle(SegmentedPickerStyle())
                         }
@@ -114,7 +121,7 @@ struct FullScreenMediaSelectionView: View {
                                     AlbumSidebarRow(
                                         album: album,
                                         isSelected: selectedAlbum?.id == album.id,
-                                        showingVideosOnly: showingVideosOnly
+                                        mediaFilter: mediaFilter
                                     ) {
                                         selectedAlbum = album
                                         Task {
@@ -153,7 +160,7 @@ struct FullScreenMediaSelectionView: View {
                                 Image(systemName: "photo.on.rectangle.angled")
                                     .font(.system(size: 60))
                                     .foregroundColor(.secondary)
-                                Text("Select an album to view photos and videos")
+                                Text(emptyPromptForFilter())
                                     .font(.title3)
                                     .foregroundColor(.secondary)
                             }
@@ -171,10 +178,10 @@ struct FullScreenMediaSelectionView: View {
                         } else if mediaItems.isEmpty {
                             // No Media State
                             VStack(spacing: 20) {
-                                Image(systemName: showingVideosOnly ? "video.slash" : "photo")
+                                Image(systemName: noMediaIconForFilter())
                                     .font(.system(size: 60))
                                     .foregroundColor(.secondary)
-                                Text(showingVideosOnly ? "No videos in this album" : "No media in this album")
+                                Text(noMediaTextForFilter())
                                     .font(.title3)
                                     .foregroundColor(.secondary)
                             }
@@ -247,27 +254,21 @@ struct FullScreenMediaSelectionView: View {
         .task {
             switch photoLibraryManager.authorizationStatus {
             case .authorized, .limited:
-                if showingVideosOnly {
-                    await photoLibraryManager.fetchVideoAlbums()
-                } else {
-                    await photoLibraryManager.fetchAllMediaAlbums()
-                }
+                await fetchAlbumsForCurrentFilter()
             case .notDetermined, .denied, .restricted:
                 await photoLibraryManager.requestPhotoLibraryAccess()
+                // After requesting, fetch based on current filter
+                await fetchAlbumsForCurrentFilter()
             @unknown default:
                 break
             }
         }
-        .onChange(of: showingVideosOnly) { _, newValue in
+        .onChange(of: mediaFilter) { _, _ in
             Task {
                 selectedAlbum = nil
                 mediaItems = []
-                selectedMedia.removeAll() // Clear selections when switching modes
-                if newValue {
-                    await photoLibraryManager.fetchVideoAlbums()
-                } else {
-                    await photoLibraryManager.fetchAllMediaAlbums()
-                }
+                selectedMedia.removeAll()
+                await fetchAlbumsForCurrentFilter()
             }
         }
         // Individual naming sheet
@@ -313,14 +314,28 @@ struct FullScreenMediaSelectionView: View {
         return Array(repeating: GridItem(.flexible(), spacing: spacing), count: itemsPerRow)
     }
     
+    private func fetchAlbumsForCurrentFilter() async {
+        switch mediaFilter {
+        case .videos:
+            await photoLibraryManager.fetchVideoAlbums()
+        case .photos:
+            await photoLibraryManager.fetchPhotoAlbums()
+        case .all:
+            await photoLibraryManager.fetchAllMediaAlbums()
+        }
+    }
+    
     private func loadAlbumMedia(_ album: PhotoAlbum) async {
         isLoadingMedia = true
         selectedMedia.removeAll() // Clear selections when switching albums
         
-        if showingVideosOnly {
+        switch mediaFilter {
+        case .videos:
             let videos = await photoLibraryManager.fetchVideos(from: album)
             mediaItems = videos.map { MediaItem(asset: $0.asset, duration: $0.duration, creationDate: $0.creationDate) }
-        } else {
+        case .photos:
+            mediaItems = await photoLibraryManager.fetchPhotos(from: album)
+        case .all:
             mediaItems = await photoLibraryManager.fetchAllMedia(from: album)
         }
         
@@ -364,12 +379,36 @@ struct FullScreenMediaSelectionView: View {
             print("No assets selected!")
         }
     }
+    
+    private func emptyPromptForFilter() -> String {
+        switch mediaFilter {
+        case .videos: return "Select an album to view videos"
+        case .photos: return "Select an album to view photos"
+        case .all: return "Select an album to view photos and videos"
+        }
+    }
+    
+    private func noMediaIconForFilter() -> String {
+        switch mediaFilter {
+        case .videos: return "video.slash"
+        case .photos: return "photo"
+        case .all: return "photo"
+        }
+    }
+    
+    private func noMediaTextForFilter() -> String {
+        switch mediaFilter {
+        case .videos: return "No videos in this album"
+        case .photos: return "No photos in this album"
+        case .all: return "No media in this album"
+        }
+    }
 }
 
 struct AlbumSidebarRow: View {
     let album: PhotoAlbum
     let isSelected: Bool
-    let showingVideosOnly: Bool
+    let mediaFilter: MediaFilter
     let onTap: () -> Void
     
     @State private var thumbnailImage: UIImage?
@@ -387,7 +426,7 @@ struct AlbumSidebarRow: View {
                         Rectangle()
                             .fill(Color.gray.opacity(0.3))
                             .overlay {
-                                Image(systemName: showingVideosOnly ? "video" : "photo")
+                                Image(systemName: placeholderIcon)
                                     .foregroundColor(.secondary)
                             }
                     }
@@ -403,11 +442,16 @@ struct AlbumSidebarRow: View {
                         .multilineTextAlignment(.leading)
                     
                     HStack {
-                        if showingVideosOnly {
+                        switch mediaFilter {
+                        case .videos:
                             Text("\(album.videoCount)")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
-                        } else {
+                        case .photos:
+                            Text("\(album.photoCount)")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        case .all:
                             if album.photoCount > 0 {
                                 Label("\(album.photoCount)", systemImage: "photo")
                                     .font(.caption)
@@ -443,6 +487,14 @@ struct AlbumSidebarRow: View {
                     targetSize: CGSize(width: 100, height: 100)
                 )
             }
+        }
+    }
+    
+    private var placeholderIcon: String {
+        switch mediaFilter {
+        case .videos: return "video"
+        case .photos: return "photo"
+        case .all: return "photo.on.rectangle.angled"
         }
     }
 }
