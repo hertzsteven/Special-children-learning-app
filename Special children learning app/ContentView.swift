@@ -313,49 +313,52 @@ struct ContentView: View {
         singleVideoName = ""
     }
     
-    private func addNamedMediaCollection(namedItems: [MediaItemForNaming], collectionName: String) {
+    private func addNamedMediaCollection(namedItems: [SavedMediaItem], collectionName: String) {
         print("Creating collection '\(collectionName)' with \(namedItems.count) named items")
         
         let cleanName = collectionName.trimmingCharacters(in: .whitespacesAndNewlines)
         let finalName = cleanName.isEmpty ? "My Media Collection" : cleanName
         
-        // Extract all assets
-        let assets = namedItems.map { $0.asset }
-        
-        let videoAssets = assets.filter { $0.mediaType == .video }
-        let photoAssets = assets.filter { $0.mediaType == .image }
-        
-        // Create SavedMediaItem objects with individual names
-        let savedMediaItems = namedItems.map { item in
-            SavedMediaItem(assetIdentifier: item.asset.localIdentifier, customName: item.customName)
+        // Get all assets by fetching them from the namedItems
+        Task {
+            var allAssets: [PHAsset] = []
+            let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: namedItems.map { $0.assetIdentifier }, options: nil)
+            fetchResult.enumerateObjects { asset, _, _ in
+                allAssets.append(asset)
+            }
+            
+            let videoAssets = allAssets.filter { $0.mediaType == .video }
+            let photoAssets = allAssets.filter { $0.mediaType == .image }
+            
+            // Save to persistence with individual names and audio recordings
+            persistence.saveCollectionWithMediaItems(
+                title: finalName,
+                mediaItems: namedItems,
+                imageName: "rectangle.stack",
+                backgroundColor: "warmBeige"
+            )
+            
+            // Create one ActivityItem containing all the media
+            let newActivity = ActivityItem(
+                title: finalName,
+                imageName: "rectangle.stack",
+                videoAssets: videoAssets.isEmpty ? nil : videoAssets,
+                photoAssets: photoAssets.isEmpty ? nil : photoAssets,
+                mediaItems: namedItems, // Include the named items with audio recordings
+                audioDescription: "A collection of \(allAssets.count) items: \(namedItems.map { $0.customName }.joined(separator: ", "))",
+                backgroundColor: "warmBeige"
+            )
+            
+            await MainActor.run {
+                customVideos.append(newActivity)
+                
+                // Show confirmation
+                toastMessage = "'\(finalName)' created with \(allAssets.count) items!"
+                showToast = true
+                
+                print("Collection created successfully with \(allAssets.count) items")
+            }
         }
-        
-        // Save to persistence with individual names
-        persistence.saveCollectionWithMediaItems(
-            title: finalName,
-            mediaItems: savedMediaItems,
-            imageName: "rectangle.stack",
-            backgroundColor: "warmBeige"
-        )
-        
-        // Create one ActivityItem containing all the media (we'll need to modify this to include names)
-        let newActivity = ActivityItem(
-            title: finalName,
-            imageName: "rectangle.stack",
-            videoAssets: videoAssets.isEmpty ? nil : videoAssets,
-            photoAssets: photoAssets.isEmpty ? nil : photoAssets,
-            mediaItems: savedMediaItems, // NEW: Pass the named items
-            audioDescription: "A collection of \(assets.count) items: \(namedItems.map { $0.customName }.joined(separator: ", "))",
-            backgroundColor: "warmBeige"
-        )
-        
-        customVideos.append(newActivity)
-        
-        // Show confirmation
-        toastMessage = "'\(finalName)' created with \(assets.count) items!"
-        showToast = true
-        
-        print("Collection created successfully with \(assets.count) items")
     }
 
     private func deleteCustomVideo(_ activity: ActivityItem) {

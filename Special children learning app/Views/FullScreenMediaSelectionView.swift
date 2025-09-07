@@ -19,7 +19,7 @@ struct FullScreenMediaSelectionView: View {
     @StateObject private var photoLibraryManager = PhotoLibraryManager()
     @Environment(\.dismiss) private var dismiss
     let onVideoSelected: (PHAsset) -> Void
-    let onIndividualMediaSelected: ([MediaItemForNaming], String) -> Void // Updated signature
+    let onIndividualMediaSelected: ([SavedMediaItem], String) -> Void // Updated signature
     
     @State private var mediaFilter: MediaFilter = .videos
     @State private var selectedAlbum: PhotoAlbum?
@@ -65,7 +65,7 @@ struct FullScreenMediaSelectionView: View {
     // Updated initializer
     init(
         onVideoSelected: @escaping (PHAsset) -> Void,
-        onIndividualMediaSelected: @escaping ([MediaItemForNaming], String) -> Void
+        onIndividualMediaSelected: @escaping ([SavedMediaItem], String) -> Void
     ) {
         self.onVideoSelected = onVideoSelected
         self.onIndividualMediaSelected = onIndividualMediaSelected
@@ -274,8 +274,8 @@ struct FullScreenMediaSelectionView: View {
         // Individual naming sheet
         .sheet(isPresented: $showingIndividualNaming) {
             if !pendingAssets.isEmpty {
-                IndividualMediaNamingView(
-                    mediaItems: IndividualMediaNamingView.createFromAssets(pendingAssets),
+                EnhancedMediaNamingView(
+                    mediaItems: MediaItemForNaming.createFromAssets(pendingAssets),
                     onCollectionComplete: { namedItems, collectionName in
                         onIndividualMediaSelected(namedItems, collectionName)
                         dismiss()

@@ -14,6 +14,7 @@ struct MediaItemForNaming: Identifiable {
     let asset: PHAsset
     var customName: String
     var isSkipped: Bool = false
+    var audioURL: URL? = nil // NEW: Audio recording URL
     
     var isVideo: Bool {
         asset.mediaType == .video

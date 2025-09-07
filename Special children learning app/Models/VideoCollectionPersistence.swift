@@ -8,16 +8,26 @@
 import Foundation
 import Photos
 
-// MARK: - Individual Media Item with Name
+// MARK: - Individual Media Item with Name and Audio
 struct SavedMediaItem: Codable, Identifiable, Hashable {
     let id: UUID
     let assetIdentifier: String
     let customName: String
+    let audioRecordingFileName: String? // NEW: Optional audio recording
     
-    init(assetIdentifier: String, customName: String) {
+    init(assetIdentifier: String, customName: String, audioRecordingFileName: String? = nil) {
         self.id = UUID()
         self.assetIdentifier = assetIdentifier
         self.customName = customName
+        self.audioRecordingFileName = audioRecordingFileName
+    }
+    
+    // NEW: Get full URL for audio file
+    var audioRecordingURL: URL? {
+        guard let fileName = audioRecordingFileName else { return nil }
+        return FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("audio_recordings")
+            .appendingPathComponent(fileName)
     }
     
     // Hashable conformance
@@ -25,6 +35,7 @@ struct SavedMediaItem: Codable, Identifiable, Hashable {
         hasher.combine(id)
         hasher.combine(assetIdentifier)
         hasher.combine(customName)
+        hasher.combine(audioRecordingFileName)
     }
     
     static func == (lhs: SavedMediaItem, rhs: SavedMediaItem) -> Bool {
@@ -60,15 +71,63 @@ class VideoCollectionPersistence: ObservableObject {
     
     private let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
     private let collectionsFileName = "video_collections.json"
+    private let audioRecordingsDirectory = "audio_recordings" // NEW: Audio recordings folder
     
     private var collectionsFileURL: URL {
         documentsDirectory.appendingPathComponent(collectionsFileName)
     }
     
+    // NEW: Audio recordings directory URL
+    private var audioRecordingsDirectoryURL: URL {
+        documentsDirectory.appendingPathComponent(audioRecordingsDirectory)
+    }
+    
     @Published var savedCollections: [SavedVideoCollection] = []
     
     private init() {
+        createAudioRecordingsDirectoryIfNeeded()
         loadCollections()
+    }
+    
+    // NEW: Create audio recordings directory
+    private func createAudioRecordingsDirectoryIfNeeded() {
+        do {
+            try FileManager.default.createDirectory(
+                at: audioRecordingsDirectoryURL,
+                withIntermediateDirectories: true,
+                attributes: nil
+            )
+            print("✅ Audio recordings directory created/verified")
+        } catch {
+            print("❌ Failed to create audio recordings directory: \(error)")
+        }
+    }
+    
+    // NEW: Save audio file and return filename
+    func saveAudioRecording(from sourceURL: URL) -> String? {
+        let fileName = "audio_\(UUID().uuidString).m4a"
+        let destinationURL = audioRecordingsDirectoryURL.appendingPathComponent(fileName)
+        
+        do {
+            // Copy the audio file to our recordings directory
+            try FileManager.default.copyItem(at: sourceURL, to: destinationURL)
+            print("✅ Saved audio recording: \(fileName)")
+            return fileName
+        } catch {
+            print("❌ Failed to save audio recording: \(error)")
+            return nil
+        }
+    }
+    
+    // NEW: Delete audio file
+    func deleteAudioRecording(fileName: String) {
+        let fileURL = audioRecordingsDirectoryURL.appendingPathComponent(fileName)
+        do {
+            try FileManager.default.removeItem(at: fileURL)
+            print("✅ Deleted audio recording: \(fileName)")
+        } catch {
+            print("❌ Failed to delete audio recording: \(error)")
+        }
     }
     
     // MARK: - Save/Load Operations

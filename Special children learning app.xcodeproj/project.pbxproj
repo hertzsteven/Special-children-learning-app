@@ -15,22 +15,9 @@
 		466766722E69D91800EAE1C0 /* Photos.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Photos.framework; path = System/Library/Frameworks/Photos.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		466766F62E6DBB3E00EAE1C0 /* Exceptions for "Special children learning app" folder in "Special children learning app" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				"Special-children-learning-app-Info.plist",
-			);
-			target = 466765C92E68B5FC00EAE1C0 /* Special children learning app */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		466765CC2E68B5FC00EAE1C0 /* Special children learning app */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				466766F62E6DBB3E00EAE1C0 /* Exceptions for "Special children learning app" folder in "Special children learning app" target */,
-			);
 			path = "Special children learning app";
 			sourceTree = "<group>";
 		};
