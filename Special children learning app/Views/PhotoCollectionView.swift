@@ -16,6 +16,7 @@ struct PhotoCollectionView: View {
     @State private var photos: [UIImage] = []
     @State private var isLoading = true
     @StateObject private var soundPlayer = SoundPlayer.shared
+    @StateObject private var audioManager = AudioPlaybackManager.shared // NEW: Audio manager
 
     @State private var isBouncing = false
     @State private var showRipple = false
@@ -26,8 +27,21 @@ struct PhotoCollectionView: View {
         return activity.photoAssets ?? []
     }
     
+    // NEW: Get current photo's associated media item
+    private var currentMediaItem: SavedMediaItem? {
+        guard currentIndex < photoAssets.count,
+              let mediaItems = activity.mediaItems else { return nil }
+        
+        let currentAsset = photoAssets[currentIndex]
+        return mediaItems.first { $0.assetIdentifier == currentAsset.localIdentifier }
+    }
+    
     // NEW: Get the current photo's name
     private var currentPhotoName: String? {
+        if let mediaItem = currentMediaItem {
+            return mediaItem.customName
+        }
+        // Fallback to activity-level name lookup
         guard currentIndex < photoAssets.count else { return nil }
         let currentAsset = photoAssets[currentIndex]
         return activity.getMediaItemName(for: currentAsset)
@@ -83,14 +97,13 @@ struct PhotoCollectionView: View {
                     .transition(.opacity)
                 }
                 
-                // Photo name overlay (bottom center) - NEW
-                if let photoName = currentPhotoName {
-                    VStack {
-                        Spacer()
-                        
-                        HStack {
-                            Spacer()
-                            
+                // Photo name and audio indicator overlay (bottom center)
+                VStack {
+                    Spacer()
+                    
+                    VStack(spacing: 8) {
+                        // Photo name
+                        if let photoName = currentPhotoName {
                             Text(photoName)
                                 .font(.title2)
                                 .fontWeight(.medium)
@@ -106,11 +119,24 @@ struct PhotoCollectionView: View {
                                         )
                                 )
                                 .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 2)
-                            
-                            Spacer()
                         }
-                        .padding(.bottom, 80) // Space from bottom
+                        
+                        // NEW: Audio playback indicator
+                        if audioManager.isPlaying {
+                            HStack(spacing: 4) {
+                                Image(systemName: "speaker.wave.2.fill")
+                                    .foregroundColor(.orange)
+                                Text("Playing audio description...")
+                                    .font(.caption)
+                                    .foregroundColor(.orange)
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(Color.black.opacity(0.7))
+                            .cornerRadius(8)
+                        }
                     }
+                    .padding(.bottom, 80) // Space from bottom
                 }
                 
                 // Close button (top right)
@@ -129,7 +155,7 @@ struct PhotoCollectionView: View {
                     Spacer()
                 }
                 
-                // Photo counter (top center) - NEW
+                // Photo counter (top center)
                 VStack {
                     HStack {
                         Spacer()
@@ -153,11 +179,35 @@ struct PhotoCollectionView: View {
         .onAppear {
             loadPhotos()
             soundPlayer.playWhoosh(volume: 0.3, rate: 1.2)
+            // NEW: Play audio for first photo
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                playAudioForCurrentPhoto()
+            }
+        }
+        .onDisappear {
+            // NEW: Cleanup audio when view disappears
+            audioManager.cleanup()
+        }
+        .onChange(of: currentIndex) { _, _ in
+            // NEW: Play audio when photo changes
+            playAudioForCurrentPhoto()
         }
         .onTapGesture {
             // Simple tap to go to next photo
             triggerTapAnimation()
             nextPhoto()
+        }
+    }
+    
+    // NEW: Play audio for current photo
+    private func playAudioForCurrentPhoto() {
+        guard let mediaItem = currentMediaItem else {
+            print("📝 PhotoCollectionView: No media item found for current photo")
+            return
+        }
+        
+        audioManager.playAudioForMediaItem(mediaItem) {
+            print("🔊 PhotoCollectionView: Finished playing audio for: \(mediaItem.customName)")
         }
     }
     
@@ -232,19 +282,5 @@ struct PhotoCollectionView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
             showRipple = false
         }
-    }
-}
-
-#Preview {
-    PhotoCollectionView(
-        activity: ActivityItem(
-            title: "Sample Photo Collection",
-            imageName: "photo.stack",
-            photoAssets: [],
-            audioDescription: "A collection of beautiful photos",
-            backgroundColor: "sage"
-        )
-    ) {
-        print("Dismissed")
     }
 }

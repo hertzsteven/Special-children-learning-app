@@ -30,6 +30,7 @@ struct VideoQueuePlayerView: View {
     @State private var didPlayThumbnailSound = false
 
     @StateObject private var settings = AppSettings.shared
+    @StateObject private var audioManager = AudioPlaybackManager.shared // NEW: Audio manager
 
     var totalVideos: Int {
         activity.videoAssets?.count ?? 0
@@ -42,6 +43,26 @@ struct VideoQueuePlayerView: View {
     
     var shouldShowThumbnail: Bool {
         return !hasStartedPlaying || (videoHasEnded && isWaitingForNextVideo)
+    }
+    
+    // NEW: Get current video's associated media item
+    private var currentMediaItem: SavedMediaItem? {
+        guard let videoAssets = activity.videoAssets,
+              currentVideoIndex < videoAssets.count,
+              let mediaItems = activity.mediaItems else { return nil }
+        
+        let currentAsset = videoAssets[currentVideoIndex]
+        return mediaItems.first { $0.assetIdentifier == currentAsset.localIdentifier }
+    }
+    
+    // NEW: Get current video name
+    private var currentVideoName: String? {
+        if let mediaItem = currentMediaItem {
+            return mediaItem.customName
+        }
+        // Fallback to activity-level name lookup
+        guard let videoAssets = activity.videoAssets, currentVideoIndex < videoAssets.count else { return nil }
+        return activity.getMediaItemName(for: videoAssets[currentVideoIndex])
     }
 
     var body: some View {
@@ -127,10 +148,18 @@ struct VideoQueuePlayerView: View {
                     // Show video info even when showing thumbnails
                     if hasStartedPlaying || isWaitingForNextVideo {
                         VStack(spacing: 8) {
-                            Text(activity.title)
-                                .font(.title)
-                                .fontWeight(.bold)
-                                .foregroundColor(.white)
+                            // NEW: Show individual video name if available
+                            if let videoName = currentVideoName {
+                                Text(videoName)
+                                    .font(.title)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.white)
+                            } else {
+                                Text(activity.title)
+                                    .font(.title)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.white)
+                            }
                             
                             if isWaitingForNextVideo {
                                 if currentRepeatCount < settings.videoRepeatCount - 1 {
@@ -146,6 +175,21 @@ struct VideoQueuePlayerView: View {
                                 Text("Playing video \(currentVideoIndex + 1) of \(totalVideos) (repeat \(currentRepeatCount + 1) of \(settings.videoRepeatCount))")
                                     .font(.headline)
                                     .foregroundColor(.white.opacity(0.8))
+                            }
+                            
+                            // NEW: Audio playback indicator
+                            if audioManager.isPlaying {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "speaker.wave.2.fill")
+                                        .foregroundColor(.orange)
+                                    Text("Playing audio description...")
+                                        .font(.caption)
+                                        .foregroundColor(.orange)
+                                }
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(Color.black.opacity(0.7))
+                                .cornerRadius(8)
                             }
                         }
                         .padding(.horizontal, 16)
@@ -169,7 +213,24 @@ struct VideoQueuePlayerView: View {
         .onDisappear {
             currentPlayer?.pause()
             currentPlayer = nil
+            audioManager.cleanup() // NEW: Cleanup audio
             SoundEffectPlayer.shared.stopAll()
+        }
+        .onChange(of: currentVideoIndex) { _, _ in
+            // NEW: Play audio when video changes
+            playAudioForCurrentVideo()
+        }
+    }
+
+    // NEW: Play audio for current video
+    private func playAudioForCurrentVideo() {
+        guard let mediaItem = currentMediaItem else {
+            print("📝 VideoQueuePlayerView: No media item found for current video")
+            return
+        }
+        
+        audioManager.playAudioForMediaItem(mediaItem) {
+            print("🔊 VideoQueuePlayerView: Finished playing audio for: \(mediaItem.customName)")
         }
     }
 
@@ -182,6 +243,11 @@ struct VideoQueuePlayerView: View {
             await loadVideoURLs(from: videoAssets)
             await generateThumbnailsFromAllVideos()
             await createPlayerForCurrentVideo()
+            
+            // NEW: Play audio for first video after setup
+            await MainActor.run {
+                playAudioForCurrentVideo()
+            }
         }
     }
     
@@ -256,6 +322,8 @@ struct VideoQueuePlayerView: View {
             revealProgress = 0
             didPlayThumbnailSound = false
             // Keep same video index and player
+            // NEW: Play audio again for repeat
+            playAudioForCurrentVideo()
         } else {
             // Move to next video and reset repeat count
             currentRepeatCount = 0
@@ -276,6 +344,7 @@ struct VideoQueuePlayerView: View {
             // Create player for next video
             Task {
                 await createPlayerForCurrentVideo()
+                // Audio will be played automatically by onChange(of: currentVideoIndex)
             }
         }
     }
