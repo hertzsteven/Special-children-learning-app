@@ -103,9 +103,9 @@ struct FullScreenMediaSelectionView: View {
                             .cornerRadius(10)
                             
                             Picker("Media Type", selection: $mediaFilter) {
-                                Text("Videos Only").tag(MediaFilter.videos)
-                                Text("Photos Only").tag(MediaFilter.photos)
-                                Text("Photos & Videos").tag(MediaFilter.all)
+                                Text("Videos").tag(MediaFilter.videos)
+                                Text("Photos").tag(MediaFilter.photos)
+                                Text("All").tag(MediaFilter.all)
                             }
                             .pickerStyle(SegmentedPickerStyle())
                         }
