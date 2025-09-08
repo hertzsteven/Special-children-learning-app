@@ -485,4 +485,27 @@ class VideoCollectionPersistence: ObservableObject {
         savedCollections.removeAll()
         saveCollections()
     }
+    
+    /// Add multiple media items to a collection at once (more efficient than individual adds)
+    func addMultipleMediaItemsToCollection(_ collectionId: UUID, mediaItems: [SavedMediaItem]) {
+        if let index = savedCollections.firstIndex(where: { $0.id == collectionId }) {
+            let collection = savedCollections[index]
+            var currentItems = collection.mediaItems ?? []
+            
+            // Filter out items that already exist (by asset identifier)
+            let newItems = mediaItems.filter { newItem in
+                !currentItems.contains(where: { $0.assetIdentifier == newItem.assetIdentifier })
+            }
+            
+            if !newItems.isEmpty {
+                currentItems.append(contentsOf: newItems)
+                updateCollection(collectionId, with: currentItems)
+                print("✅ Added \(newItems.count) new media items to collection")
+            } else {
+                print("⚠️ No new items to add - all items already exist in collection")
+            }
+        } else {
+            print("❌ Could not find collection with ID '\(collectionId)' to add media items")
+        }
+    }
 }
