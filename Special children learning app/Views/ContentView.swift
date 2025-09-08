@@ -120,9 +120,14 @@ struct ContentView: View {
                 CollectionEditView(
                     activity: activity,
                     onCollectionUpdated: { updatedActivity in
-                        // Update the activity in customVideos array
+                        // Update the activity in activityItemCollection array
                         if let index = activityItemCollection.firstIndex(where: { $0.id == activity.id }) {
-                            activityItemCollection[index] = updatedActivity
+                            activityItemCollection.remove(at: index)
+                            activityItemCollection.insert(updatedActivity, at: index)
+//                            activityItemCollection[index] = updatedActivity
+                            print("✅ Updated ActivityItem '\(updatedActivity.title)' in ContentView")
+                        } else {
+                            print("⚠️ Could not find ActivityItem to update in ContentView")
                         }
                     }
                 )
@@ -309,7 +314,7 @@ struct ContentView: View {
     private func addSingleVideo(from asset: PHAsset, name: String) {
         let cleanName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         
-        // Save to persistence
+        // Save to persistence FIRST to get the collection ID
         persistence.saveCollection(
             title: cleanName,
             assetIdentifiers: [asset.localIdentifier],
@@ -317,27 +322,32 @@ struct ContentView: View {
             backgroundColor: asset.mediaType == .video ? "softBlue" : "sage"
         )
         
-        // Add to current session
-        let newActivity: ActivityItem
-        if asset.mediaType == .video {
-            newActivity = ActivityItem(
-                title: cleanName,
-                imageName: "video.circle",
-                videoAsset: asset,
-                audioDescription: "A custom video from your library",
-                backgroundColor: "softBlue"
-            )
-        } else {
-            newActivity = ActivityItem(
-                title: cleanName,
-                imageName: "photo.circle",
-                photoAsset: asset,
-                audioDescription: "A custom photo from your library",
-                backgroundColor: "sage"
-            )
+        // Find the newly created collection to get its ID
+        if let newCollection = persistence.savedCollections.last {
+            // Create ActivityItem with the SAME ID as the saved collection
+            let newActivity: ActivityItem
+            if asset.mediaType == .video {
+                newActivity = ActivityItem(
+                    id: newCollection.id,  // ← Use saved collection's ID
+                    title: cleanName,
+                    imageName: "video.circle",
+                    videoAsset: asset,
+                    audioDescription: "A custom video from your library",
+                    backgroundColor: "softBlue"
+                )
+            } else {
+                newActivity = ActivityItem(
+                    id: newCollection.id,  // ← Use saved collection's ID
+                    title: cleanName,
+                    imageName: "photo.circle",
+                    photoAsset: asset,
+                    audioDescription: "A custom photo from your library",
+                    backgroundColor: "sage"
+                )
+            }
+            
+            activityItemCollection.append(newActivity)
         }
-        
-        activityItemCollection.append(newActivity)
         
         // Show confirmation
         let mediaType = asset.mediaType == .video ? "video" : "photo"
@@ -366,7 +376,7 @@ struct ContentView: View {
             let videoAssets = allAssets.filter { $0.mediaType == .video }
             let photoAssets = allAssets.filter { $0.mediaType == .image }
             
-            // Save to persistence with individual names and audio recordings
+            // Save to persistence with individual names and audio recordings FIRST
             persistence.saveCollectionWithMediaItems(
                 title: finalName,
                 mediaItems: namedItems,
@@ -374,19 +384,23 @@ struct ContentView: View {
                 backgroundColor: "warmBeige"
             )
             
-            // Create one ActivityItem containing all the media
-            let newActivity = ActivityItem(
-                title: finalName,
-                imageName: "rectangle.stack",
-                videoAssets: videoAssets.isEmpty ? nil : videoAssets,
-                photoAssets: photoAssets.isEmpty ? nil : photoAssets,
-                mediaItems: namedItems, // Include the named items with audio recordings
-                audioDescription: "A collection of \(allAssets.count) items: \(namedItems.map { $0.customName }.joined(separator: ", "))",
-                backgroundColor: "warmBeige"
-            )
-            
             await MainActor.run {
-                activityItemCollection.append(newActivity)
+                // Find the newly created collection to get its ID
+                if let newCollection = persistence.savedCollections.last {
+                    // Create ActivityItem with the SAME ID as the saved collection
+                    let newActivity = ActivityItem(
+                        id: newCollection.id,  // ← Use saved collection's ID
+                        title: finalName,
+                        imageName: "rectangle.stack",
+                        videoAssets: videoAssets.isEmpty ? nil : videoAssets,
+                        photoAssets: photoAssets.isEmpty ? nil : photoAssets,
+                        mediaItems: namedItems,
+                        audioDescription: "A collection of \(allAssets.count) items: \(namedItems.map { $0.customName }.joined(separator: ", "))",
+                        backgroundColor: "warmBeige"
+                    )
+                    
+                    activityItemCollection.append(newActivity)
+                }
                 
                 // Show confirmation
                 toastMessage = "'\(finalName)' created with \(allAssets.count) items!"
@@ -415,12 +429,13 @@ struct ContentView: View {
             // Update in persistence
             persistence.renameCollection(matchingCollection, newTitle: cleanName)
             
-            // UPDATE: Preserve assets and mediaItems when updating local ActivityItem
+            // UPDATE: Preserve ID and all other properties when updating local ActivityItem
             if let index = activityItemCollection.firstIndex(where: { $0.id == activity.id }) {
                 let updatedActivity: ActivityItem
                 
                 if let videoAssets = activity.videoAssets, let photoAssets = activity.photoAssets {
                     updatedActivity = ActivityItem(
+                        id: activity.id,  // ← PRESERVE the original ID
                         title: cleanName,
                         imageName: activity.imageName,
                         videoAssets: videoAssets,
@@ -431,22 +446,29 @@ struct ContentView: View {
                     )
                 } else if let videoAssets = activity.videoAssets {
                     updatedActivity = ActivityItem(
+                        id: activity.id,  // ← PRESERVE the original ID  
                         title: cleanName,
                         imageName: activity.imageName,
                         videoAssets: videoAssets,
+                        photoAssets: nil,
+                        mediaItems: activity.mediaItems,
                         audioDescription: activity.audioDescription,
                         backgroundColor: activity.backgroundColor
                     )
                 } else if let photoAssets = activity.photoAssets {
                     updatedActivity = ActivityItem(
+                        id: activity.id,  // ← PRESERVE the original ID
                         title: cleanName,
                         imageName: activity.imageName,
+                        videoAssets: nil,
                         photoAssets: photoAssets,
+                        mediaItems: activity.mediaItems,
                         audioDescription: activity.audioDescription,
                         backgroundColor: activity.backgroundColor
                     )
                 } else if let videoAsset = activity.videoAsset {
                     updatedActivity = ActivityItem(
+                        id: activity.id,  // ← PRESERVE the original ID
                         title: cleanName,
                         imageName: activity.imageName,
                         videoAsset: videoAsset,
@@ -455,6 +477,7 @@ struct ContentView: View {
                     )
                 } else if let photoAsset = activity.photoAsset {
                     updatedActivity = ActivityItem(
+                        id: activity.id,  // ← PRESERVE the original ID
                         title: cleanName,
                         imageName: activity.imageName,
                         photoAsset: photoAsset,
@@ -462,16 +485,22 @@ struct ContentView: View {
                         backgroundColor: activity.backgroundColor
                     )
                 } else {
+                    // For local video files, we need to add a UUID-preserving initializer for this case
+                    // For now, use the general initializer with nil values
                     updatedActivity = ActivityItem(
+                        id: activity.id,  // ← PRESERVE the original ID
                         title: cleanName,
                         imageName: activity.imageName,
-                        videoFileName: activity.videoFileName ?? "",
+                        videoAssets: nil,
+                        photoAssets: nil,
+                        mediaItems: nil,
                         audioDescription: activity.audioDescription,
                         backgroundColor: activity.backgroundColor
                     )
                 }
                 
                 activityItemCollection[index] = updatedActivity
+                print("✅ Updated ActivityItem '\(cleanName)' with preserved ID in ContentView")
             }
             
             toastMessage = "Collection renamed to '\(cleanName)'"

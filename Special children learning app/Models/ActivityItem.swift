@@ -155,6 +155,21 @@ struct ActivityItem: Identifiable, Hashable, Equatable, Codable {
         self.backgroundColor = backgroundColor
     }
     
+    // NEW: UUID-preserving initializer for local video files
+    init(id: UUID, title: String, imageName: String, videoFileName: String, audioDescription: String, backgroundColor: String) {
+        self.id = id
+        self.title = title
+        self.imageName = imageName
+        self.videoFileName = videoFileName
+        self.videoAsset = nil
+        self.photoAsset = nil
+        self.videoAssets = nil
+        self.photoAssets = nil
+        self.mediaItems = nil
+        self.audioDescription = audioDescription
+        self.backgroundColor = backgroundColor
+    }
+    
     // MARK: - Codable Conformance
     
     init(from decoder: Decoder) throws {
