@@ -22,6 +22,14 @@ struct SavedMediaItem: Codable, Identifiable, Hashable {
         self.audioRecordingFileName = audioRecordingFileName
     }
     
+    // NEW: Init with existing ID (for updates)
+    init(id: UUID, assetIdentifier: String, customName: String, audioRecordingFileName: String? = nil) {
+        self.id = id
+        self.assetIdentifier = assetIdentifier
+        self.customName = customName
+        self.audioRecordingFileName = audioRecordingFileName
+    }
+    
     // NEW: Get full URL for audio file
     var audioRecordingURL: URL? {
         guard let fileName = audioRecordingFileName else { return nil }
@@ -44,7 +52,7 @@ struct SavedMediaItem: Codable, Identifiable, Hashable {
 }
 
 // MARK: - Codable Models for Persistence
-struct SavedVideoCollection: Codable, Identifiable {
+struct SavedVideoCollection: Codable, Identifiable, Equatable {
     let id: UUID
     let title: String
     let imageName: String
@@ -61,6 +69,17 @@ struct SavedVideoCollection: Codable, Identifiable {
     // Computed property to get all identifiers (for backward compatibility)
     var allAssetIdentifiers: [String] {
         return mediaItems?.map { $0.assetIdentifier } ?? assetIdentifiers
+    }
+    
+    // Equatable conformance
+    static func == (lhs: SavedVideoCollection, rhs: SavedVideoCollection) -> Bool {
+        return lhs.id == rhs.id &&
+               lhs.title == rhs.title &&
+               lhs.imageName == rhs.imageName &&
+               lhs.assetIdentifiers == rhs.assetIdentifiers &&
+               lhs.mediaItems == rhs.mediaItems &&
+               lhs.backgroundColor == rhs.backgroundColor &&
+               lhs.createdDate == rhs.createdDate
     }
 }
 
@@ -298,6 +317,158 @@ class VideoCollectionPersistence: ObservableObject {
             
             continuation.resume(returning: assets.isEmpty ? nil : assets)
         }
+    }
+    
+    // MARK: - Collection Update Operations
+    
+    func updateCollection(_ collectionId: UUID, with updatedItems: [SavedMediaItem]) {
+        if let index = savedCollections.firstIndex(where: { $0.id == collectionId }) {
+            let collection = savedCollections[index]
+            let updatedCollection = SavedVideoCollection(
+                id: collection.id,
+                title: collection.title,
+                imageName: collection.imageName,
+                assetIdentifiers: [], // Clear old format
+                mediaItems: updatedItems,
+                backgroundColor: collection.backgroundColor,
+                createdDate: collection.createdDate
+            )
+            savedCollections[index] = updatedCollection
+            saveCollections()
+            print("✅ Updated collection '\(collection.title)' with \(updatedItems.count) items")
+        }
+    }
+    
+    func addMediaItemToCollection(_ collectionId: UUID, mediaItem: SavedMediaItem) {
+        if let index = savedCollections.firstIndex(where: { $0.id == collectionId }) {
+            let collection = savedCollections[index]
+            var currentItems = collection.mediaItems ?? []
+            
+            // Check if item already exists (by asset identifier)
+            if !currentItems.contains(where: { $0.assetIdentifier == mediaItem.assetIdentifier }) {
+                currentItems.append(mediaItem)
+                updateCollection(collectionId, with: currentItems)
+            } else {
+                print("⚠️ Media item already exists in collection")
+            }
+        }
+    }
+    
+    func removeMediaItemFromCollection(_ collectionId: UUID, mediaItemId: UUID) {
+        if let index = savedCollections.firstIndex(where: { $0.id == collectionId }) {
+            let collection = savedCollections[index]
+            var currentItems = collection.mediaItems ?? []
+            
+            // Remove the audio file if it exists
+            if let itemToRemove = currentItems.first(where: { $0.id == mediaItemId }),
+               let audioFileName = itemToRemove.audioRecordingFileName {
+                deleteAudioRecording(fileName: audioFileName)
+            }
+            
+            currentItems.removeAll { $0.id == mediaItemId }
+            updateCollection(collectionId, with: currentItems)
+        }
+    }
+    
+    func updateMediaItemInCollection(_ collectionId: UUID, updatedMediaItem: SavedMediaItem) {
+        if let index = savedCollections.firstIndex(where: { $0.id == collectionId }) {
+            let collection = savedCollections[index]
+            var currentItems = collection.mediaItems ?? []
+            
+            if let itemIndex = currentItems.firstIndex(where: { $0.id == updatedMediaItem.id }) {
+                // If we're changing the audio file, clean up the old one
+                let oldItem = currentItems[itemIndex]
+                if let oldAudioFileName = oldItem.audioRecordingFileName,
+                   oldAudioFileName != updatedMediaItem.audioRecordingFileName {
+                    deleteAudioRecording(fileName: oldAudioFileName)
+                }
+                
+                currentItems[itemIndex] = updatedMediaItem
+                
+                // Update the collection with new items
+                let updatedCollection = SavedVideoCollection(
+                    id: collection.id,
+                    title: collection.title,
+                    imageName: collection.imageName,
+                    assetIdentifiers: [], // Clear old format
+                    mediaItems: currentItems,
+                    backgroundColor: collection.backgroundColor,
+                    createdDate: collection.createdDate
+                )
+                savedCollections[index] = updatedCollection
+                saveCollections()
+                
+                print("✅ Updated media item '\(updatedMediaItem.customName)' in collection")
+                
+                // Force a published update - this should trigger UI refresh
+                objectWillChange.send()
+            }
+        }
+    }
+    
+    func updateMediaItemName(_ collectionId: UUID, mediaItemId: UUID, newName: String) {
+        if let index = savedCollections.firstIndex(where: { $0.id == collectionId }) {
+            let collection = savedCollections[index]
+            var currentItems = collection.mediaItems ?? []
+            
+            if let itemIndex = currentItems.firstIndex(where: { $0.id == mediaItemId }) {
+                let oldItem = currentItems[itemIndex]
+                let updatedItem = SavedMediaItem(
+                    assetIdentifier: oldItem.assetIdentifier,
+                    customName: newName,
+                    audioRecordingFileName: oldItem.audioRecordingFileName
+                )
+                // Preserve the original ID
+                let finalItem = SavedMediaItem(
+                    id: oldItem.id,
+                    assetIdentifier: oldItem.assetIdentifier,
+                    customName: newName,
+                    audioRecordingFileName: oldItem.audioRecordingFileName
+                )
+                currentItems[itemIndex] = finalItem
+                updateCollection(collectionId, with: currentItems)
+            }
+        }
+    }
+    
+    func updateMediaItemAudio(_ collectionId: UUID, mediaItemId: UUID, newAudioURL: URL?) {
+        if let index = savedCollections.firstIndex(where: { $0.id == collectionId }) {
+            let collection = savedCollections[index]
+            var currentItems = collection.mediaItems ?? []
+            
+            if let itemIndex = currentItems.firstIndex(where: { $0.id == mediaItemId }) {
+                let oldItem = currentItems[itemIndex]
+                
+                // Handle new audio file
+                var newAudioFileName: String? = nil
+                if let audioURL = newAudioURL {
+                    newAudioFileName = saveAudioRecording(from: audioURL)
+                }
+                
+                // Clean up old audio file if it exists and we're replacing it
+                if let oldAudioFileName = oldItem.audioRecordingFileName,
+                   newAudioFileName != oldAudioFileName {
+                    deleteAudioRecording(fileName: oldAudioFileName)
+                }
+                
+                let updatedItem = SavedMediaItem(
+                    id: oldItem.id,
+                    assetIdentifier: oldItem.assetIdentifier,
+                    customName: oldItem.customName,
+                    audioRecordingFileName: newAudioFileName
+                )
+                currentItems[itemIndex] = updatedItem
+                updateCollection(collectionId, with: currentItems)
+            }
+        }
+    }
+    
+    func getCollection(by id: UUID) -> SavedVideoCollection? {
+        return savedCollections.first { $0.id == id }
+    }
+    
+    func getMediaItemsForCollection(_ collectionId: UUID) -> [SavedMediaItem] {
+        return getCollection(by: collectionId)?.mediaItems ?? []
     }
     
     // MARK: - Utility Methods

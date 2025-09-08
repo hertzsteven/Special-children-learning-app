@@ -27,10 +27,10 @@ struct ContentView: View {
     @State private var showingCollectionSelection = false
     @State private var selectedActivityForSelection: ActivityItem?
     @State private var filteredActivityForViewing: ActivityItem?
-    
     @State private var showingDeleteConfirm = false
     @State private var activityToDelete: ActivityItem?
-
+    @State private var navPath = NavigationPath()
+    
     @StateObject private var persistence = VideoCollectionPersistence.shared
     
     let columns = [
@@ -44,142 +44,86 @@ struct ContentView: View {
     }
     
     var body: some View {
-        ZStack {
-            // Calm background color
-            Color.creamBackground
-                .ignoresSafeArea()
-            
-            VStack(spacing: 30) {
-                // App Title and Settings
-                VStack(spacing: 8) {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Learning Together")
-                                .font(.largeTitle)
-                                .fontWeight(.bold)
-                                .foregroundColor(.primary)
+        NavigationStack(path: $navPath) {
+            ZStack {
+                // Calm background color
+                Color.creamBackground
+                    .ignoresSafeArea()
+                
+                VStack(spacing: 30) {
+                    // App Title and Settings
+                    VStack(spacing: 8) {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Learning Together")
+                                    .font(.largeTitle)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.primary)
+                                
+                                Text("Tap an activity to see and learn")
+                                    .font(.title3)
+                                    .foregroundColor(.secondary)
+                            }
                             
-                            Text("Tap an activity to see and learn")
-                                .font(.title3)
-                                .foregroundColor(.secondary)
-                        }
-                        
-                        Spacer()
-                        
-                        Button(action: {
-                            showingSettings = true
-                        }) {
-                            Image(systemName: "gearshape.fill")
-                                .font(.title2)
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                }
-                .padding(.top, 50)
-                .padding(.horizontal, 20)
-                
-                // Add Video Button
-                Button(action: {
-                    showingVideoSelection = true
-                }) {
-                    HStack {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.title2)
-                        Text("Add Video from Library")
-                            .font(.headline)
-                    }
-                    .foregroundColor(.white)
-                    .padding()
-                    .background(Color.blue)
-                    .cornerRadius(12)
-                }
-                
-                // Activities Grid
-                ScrollView {
-                    LazyVGrid(columns: columns, spacing: 24) {
-                        ForEach(allActivities) { activity in
-                            ActivityCardView(activity: activity) {
-                                // NEW: Show selection view for collections, direct view for single items
-                                if activity.isVideoCollection || activity.isPhotoCollection || activity.isMixedMediaCollection {
-                                    // Show selection interface for collections
-                                    selectedActivityForSelection = activity
-                                    showingCollectionSelection = true
-                                } else {
-                                    // Direct view for single items
-                                    selectedActivity = activity
-                                    showingVideo = true
-                                }
-                            }
-                            .contextMenu {
-                                // Add context menu for custom videos
-                                if customVideos.contains(where: { $0.id == activity.id }) {
-                                    Button("Delete Collection", role: .destructive) {
-                                        activityToDelete = activity
-                                        showingDeleteConfirm = true
-                                    }
-                                    
-                                    Button("Rename Collection") {
-                                        activityToRename = activity
-                                        renameText = activity.title
-                                        showingRenameDialog = true
-                                    }
-                                }
+                            Spacer()
+                            
+                            Button(action: {
+                                showingSettings = true
+                            }) {
+                                Image(systemName: "gearshape.fill")
+                                    .font(.title2)
+                                    .foregroundColor(.secondary)
                             }
                         }
                     }
+                    .padding(.top, 50)
                     .padding(.horizontal, 20)
+                    
+                    // Add Video Button
+                    Button(action: {
+                        showingVideoSelection = true
+                    }) {
+                        HStack {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.title2)
+                            Text("Add Video from Library")
+                                .font(.headline)
+                        }
+                        .foregroundColor(.white)
+                        .padding()
+                        .background(Color.blue)
+                        .cornerRadius(12)
+                    }
+                    
+                    // Activities Grid
+                    ScrollView {
+                        LazyVGrid(columns: columns, spacing: 24) {
+                            ForEach(allActivities) { activity in
+                                activityCard(for: activity)
+                            }
+                        }
+                        .padding(.horizontal, 20)
+                    }
+                    
+                    Spacer()
                 }
                 
-                Spacer()
+                // Video Player Overlay
+                videoOverlay
+                
+                // NEW: Collection Selection Overlay
+                collectionSelectionOverlay
             }
-            
-            // Video Player Overlay
-            if showingVideo, let activity = selectedActivity {
-                if activity.isVideoCollection {
-                    VideoQueuePlayerView(activity: activity) {
-                        showingVideo = false
-                        selectedActivity = nil
-                    }
-                } else if activity.isPhotoCollection {
-                    PhotoCollectionView(activity: activity) {
-                        showingVideo = false
-                        selectedActivity = nil
-                    }
-                } else if activity.isMixedMediaCollection {
-                    // We'll need to create a mixed media viewer later
-                    VideoQueuePlayerView(activity: activity) {
-                        showingVideo = false
-                        selectedActivity = nil
-                    }
-                } else if activity.isPhoto {
-                    PhotoViewerView(activity: activity) {
-                        showingVideo = false
-                        selectedActivity = nil
-                    }
-                } else {
-                    VideoPlayerView(activity: activity) {
-                        showingVideo = false
-                        selectedActivity = nil
-                    }
-                }
-            }
-            
-            // NEW: Collection Selection Overlay
-            if showingCollectionSelection, let activity = selectedActivityForSelection {
-                CollectionItemSelectionView(
+            .navigationDestination(for: ActivityItem.self) { activity in
+                let _ = print(activity.title)
+                let _ = print("-----")
+                CollectionEditView(
                     activity: activity,
-                    onDismiss: {
-                        showingCollectionSelection = false
-                        selectedActivityForSelection = nil
-                    },
-                    onSelectionComplete: { filteredActivity in
-                        // Close selection view and open media viewer with filtered items
-                        showingCollectionSelection = false
-                        selectedActivityForSelection = nil
-                        
-                        // Set up for viewing the filtered activity
-                        selectedActivity = filteredActivity
-                        showingVideo = true
+                    onCollectionUpdated: { updatedActivity in
+                        // Update the activity in customVideos array
+                        if let index = customVideos.firstIndex(where: { $0.id == activity.id }) {
+                            customVideos[index] = updatedActivity
+                        }
                     }
                 )
             }
@@ -264,7 +208,99 @@ struct ContentView: View {
             await loadSavedCollections()
         }
     }
-    
+
+    @ViewBuilder
+    private func activityCard(for activity: ActivityItem) -> some View {
+        let editHandler: (() -> Void)? = isCustom(activity) ? { navPath.append(activity) } : nil
+        
+        ActivityCardView(
+            activity: activity,
+            onTap: {
+                if activity.isVideoCollection || activity.isPhotoCollection || activity.isMixedMediaCollection {
+                    selectedActivityForSelection = activity
+                    showingCollectionSelection = true
+                } else {
+                    selectedActivity = activity
+                    showingVideo = true
+                }
+            },
+            onEdit: editHandler
+        )
+        .contextMenu {
+            if isCustom(activity) {
+                Button("Edit Collection") {
+                    navPath.append(activity)
+                }
+                
+                Button("Delete Collection", role: .destructive) {
+                    activityToDelete = activity
+                    showingDeleteConfirm = true
+                }
+                
+                Button("Rename Collection") {
+                    activityToRename = activity
+                    renameText = activity.title
+                    showingRenameDialog = true
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var videoOverlay: some View {
+        if showingVideo, let activity = selectedActivity {
+            if activity.isVideoCollection {
+                VideoQueuePlayerView(activity: activity) {
+                    showingVideo = false
+                    selectedActivity = nil
+                }
+            } else if activity.isPhotoCollection {
+                PhotoCollectionView(activity: activity) {
+                    showingVideo = false
+                    selectedActivity = nil
+                }
+            } else if activity.isMixedMediaCollection {
+                VideoQueuePlayerView(activity: activity) {
+                    showingVideo = false
+                    selectedActivity = nil
+                }
+            } else if activity.isPhoto {
+                PhotoViewerView(activity: activity) {
+                    showingVideo = false
+                    selectedActivity = nil
+                }
+            } else {
+                VideoPlayerView(activity: activity) {
+                    showingVideo = false
+                    selectedActivity = nil
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var collectionSelectionOverlay: some View {
+        if showingCollectionSelection, let activity = selectedActivityForSelection {
+            CollectionItemSelectionView(
+                activity: activity,
+                onDismiss: {
+                    showingCollectionSelection = false
+                    selectedActivityForSelection = nil
+                },
+                onSelectionComplete: { filteredActivity in
+                    showingCollectionSelection = false
+                    selectedActivityForSelection = nil
+                    selectedActivity = filteredActivity
+                    showingVideo = true
+                }
+            )
+        }
+    }
+
+    private func isCustom(_ activity: ActivityItem) -> Bool {
+        customVideos.contains(where: { $0.id == activity.id })
+    }
+
     private func loadSavedCollections() async {
         let savedActivityItems = await persistence.convertToActivityItems()
         customVideos = savedActivityItems
