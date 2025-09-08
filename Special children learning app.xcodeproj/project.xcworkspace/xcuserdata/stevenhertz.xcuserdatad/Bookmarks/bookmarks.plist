@@ -59,13 +59,13 @@
 					<key>EndingColumnNumber</key>
 					<string>0</string>
 					<key>EndingLineNumber</key>
-					<string>190</string>
+					<string>192</string>
 					<key>StartingColumnNumber</key>
-					<string>66</string>
+					<string>0</string>
 					<key>StartingLineNumber</key>
-					<string>189</string>
+					<string>191</string>
 					<key>Timestamp</key>
-					<string>779028778.409582</string>
+					<string>779051125.6924191</string>
 				</dict>
 				<key>rebasable-url</key>
 				<dict>
@@ -81,16 +81,16 @@
 			<key>text-context</key>
 			<dict>
 				<key>focused</key>
-				<string>
+				<string>        }
 </string>
 				<key>leading</key>
-				<string>        }
-        // NEW: Media selection for adding to existing collection
-        .fullScreenCover(isPresented: $showingAddMediaSelection) {</string>
+				<string>                )
+            }
+</string>
 				<key>trailing</key>
-				<string>            FullScreenMediaSelectionView(
-                onVideoSelected: { selectedAsset in
-                    // Handle single asset selection - convert to array and proceed to naming
+				<string>        // NEW: Media selection for adding to existing collection
+        .fullScreenCover(isPresented: $showingAddMediaSelection) {
+            FullScreenMediaSelectionView(
 </string>
 			</dict>
 			<key>title</key>
@@ -151,15 +151,15 @@
 				<key>location-parameters</key>
 				<dict>
 					<key>EndingColumnNumber</key>
-					<string>42</string>
+					<string>44</string>
 					<key>EndingLineNumber</key>
 					<string>141</string>
 					<key>StartingColumnNumber</key>
-					<string>42</string>
+					<string>44</string>
 					<key>StartingLineNumber</key>
 					<string>141</string>
 					<key>Timestamp</key>
-					<string>779033248.0943609</string>
+					<string>779052927.900784</string>
 				</dict>
 				<key>rebasable-url</key>
 				<dict>
@@ -178,12 +178,12 @@
 				<string></string>
 				<key>leading</key>
 				<string>            
-            Button("Add to Collection") {
-                saveDirectlyToCollection()</string>
+//            Button("Add to Collectionxxxx") {
+//                saveDirectlyToCollection()</string>
 				<key>trailing</key>
 				<string>
-            }
-            .font(.headline)
+//            }
+//            .font(.headline)
 </string>
 			</dict>
 			<key>title</key>

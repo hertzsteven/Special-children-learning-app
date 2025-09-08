@@ -127,7 +127,7 @@ struct EnhancedMediaNamingView: View {
                 .foregroundColor(.green)
             
             VStack(spacing: 8) {
-                Text("Items Named!")
+                Text("Items Added!")
                     .font(.title2)
                     .fontWeight(.bold)
                 
@@ -138,15 +138,15 @@ struct EnhancedMediaNamingView: View {
                     .padding(.horizontal)
             }
             
-            Button("Add to Collection") {
-                saveDirectlyToCollection()
-            }
-            .font(.headline)
-            .foregroundColor(.white)
-            .padding(.horizontal, 32)
-            .padding(.vertical, 12)
-            .background(Color.green)
-            .cornerRadius(25)
+//            Button("Add to Collectionxxxx") {
+//                saveDirectlyToCollection()
+//            }
+//            .font(.headline)
+//            .foregroundColor(.white)
+//            .padding(.horizontal, 32)
+//            .padding(.vertical, 12)
+//            .background(Color.green)
+//            .cornerRadius(25)
             
             Spacer()
         }

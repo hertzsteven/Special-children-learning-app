@@ -166,10 +166,14 @@ struct CollectionEditView: View {
             if let itemToEdit = itemToEdit {
                 MediaItemEditView(
                     mediaItem: itemToEdit,
+                    collectionId: activityItem.id,
                     onSave: { updatedItem in
-                        // Update local state
+                        // The updatedItem from onSave now contains the LATEST name and audio state.
+                        // Simply update local state with this item.
                         if let index = mediaItems.firstIndex(where: { $0.id == updatedItem.id }) {
-                            mediaItems[index] = updatedItem
+                            mediaItems.remove(at: index)
+                            mediaItems.insert(updatedItem, at: index)
+//                            mediaItems[index] = updatedItem
                         }
                         
                         // Persist change
@@ -208,6 +212,7 @@ struct CollectionEditView: View {
                     mediaItems: MediaItemForNaming.createFromAssets(pendingNewAssets),
                     onCollectionComplete: { namedItems, _ in
                         // For adding to existing collection, ignore the collection name
+                        // and just add the named items
                         addNamedItemsToExistingCollection(namedItems)
                         showingAddMediaNaming = false
                         pendingNewAssets = []
@@ -594,6 +599,7 @@ extension ActivityItem {
 //                        if let index = mediaItems.firstIndex(where: { $0.id == updatedItem.id }) {
 //                            mediaItems.remove(at: index)
 //                            mediaItems.insert(updatedItem, at: index)
+////                            mediaItems[index].customName = updatedItem.customName
 //                            dump(mediaItems[index])
 //                            print(index)
 //                        }
