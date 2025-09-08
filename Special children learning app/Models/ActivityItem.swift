@@ -229,11 +229,11 @@ struct ActivityItem: Identifiable, Hashable, Equatable, Codable {
     }
 
     var isVideoCollection: Bool {
-        videoAssets != nil && videoAssets!.count > 1
+        (videoAssets?.count ?? 0) >= 1
     }
     
     var isPhotoCollection: Bool {
-        photoAssets != nil && photoAssets!.count > 1
+        (photoAssets?.count ?? 0) >= 1
     }
     
     var isMixedMediaCollection: Bool {

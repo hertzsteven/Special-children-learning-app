@@ -39,25 +39,20 @@ struct ActivityCardView: View {
                             .foregroundColor(.primary)
                             .multilineTextAlignment(.center)
                         
-                        // Show video count for collections
-                        if activity.isVideoCollection, let count = activity.videoAssets?.count {
-                            Text("\(count) videos")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                        
-                        // Show photo count for photo collections  
-                        if activity.isPhotoCollection, let count = activity.photoAssets?.count {
-                            Text("\(count) photos")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                        
-                        // Show mixed media count
+                        // Show a single line of info: prefer mixed → video → photo
                         if activity.isMixedMediaCollection {
                             let videoCount = activity.videoAssets?.count ?? 0
                             let photoCount = activity.photoAssets?.count ?? 0
-                            Text("\(videoCount + photoCount) items")
+                            let total = videoCount + photoCount
+                            Text("\(total) \(total == 1 ? "item" : "items")")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        } else if let count = activity.videoAssets?.count, count > 0 {
+                            Text("\(count) \(count == 1 ? "video" : "videos")")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        } else if let count = activity.photoAssets?.count, count > 0 {
+                            Text("\(count) \(count == 1 ? "photo" : "photos")")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -67,8 +62,8 @@ struct ActivityCardView: View {
             .buttonStyle(CardButtonStyle())
             
             // NEW: Edit button for collections
-            if let onEdit = onEdit, 
-               (activity.isVideoCollection || activity.isPhotoCollection || activity.isMixedMediaCollection) {
+            if let onEdit = onEdit {
+//               (activity.isVideoCollection || activity.isPhotoCollection || activity.isMixedMediaCollection) {
                 Button(action: {
                     let impactFeedback = UIImpactFeedbackGenerator(style: .light)
                     impactFeedback.impactOccurred()
@@ -89,18 +84,35 @@ struct ActivityCardView: View {
     }
     
     private var accessibilityLabel: String {
-        if activity.isVideoCollection {
-            return "\(activity.title). Collection with \(activity.videoAssets?.count ?? 0) videos."
+        if activity.isMixedMediaCollection {
+            let total = (activity.videoAssets?.count ?? 0) + (activity.photoAssets?.count ?? 0)
+            return "\(activity.title). Collection with \(total) \(total == 1 ? "item" : "items")."
+        } else if let count = activity.videoAssets?.count, count > 0 {
+            return "\(activity.title). Collection with \(count) \(count == 1 ? "video" : "videos")."
+        } else if let count = activity.photoAssets?.count, count > 0 {
+            return "\(activity.title). Collection with \(count) \(count == 1 ? "photo" : "photos")."
+        } else if activity.isPhoto {
+            return "\(activity.title). Photo."
+        } else if activity.isVideo {
+            return "\(activity.title). Video."
         } else {
-            return "\(activity.title). Tap to play video."
+            return activity.title
         }
     }
     
     private var accessibilityHint: String {
-        if activity.isVideoCollection {
+        if activity.isMixedMediaCollection {
+            return "Double tap to view collection"
+        } else if let count = activity.videoAssets?.count, count > 0 {
             return "Double tap to play video collection"
+        } else if let count = activity.photoAssets?.count, count > 0 {
+            return "Double tap to view photo collection"
+        } else if activity.isPhoto {
+            return "Double tap to view photo"
+        } else if activity.isVideo {
+            return "Double tap to play video"
         } else {
-            return "Double tap to see a video about \(activity.title)"
+            return "Double tap to open"
         }
     }
 }

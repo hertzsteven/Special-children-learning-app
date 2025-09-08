@@ -222,13 +222,13 @@ struct ContentView: View {
         ActivityCardView(
             activity: activity,
             onTap: {
-                if activity.isVideoCollection || activity.isPhotoCollection || activity.isMixedMediaCollection {
+//                if activity.isVideoCollection || activity.isPhotoCollection || activity.isMixedMediaCollection {
                     selectedActivityForSelection = activity
                     showingCollectionSelection = true
-                } else {
-                    selectedActivity = activity
-                    showingVideo = true
-                }
+//                } else {
+//                    selectedActivity = activity
+//                    showingVideo = true
+//                }
             },
             onEdit: editHandler
         )
@@ -315,37 +315,31 @@ struct ContentView: View {
     private func addSingleVideo(from asset: PHAsset, name: String) {
         let cleanName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         
-        // Save to persistence FIRST to get the collection ID
-        persistence.saveCollection(
+        let mediaItem = SavedMediaItem(
+            assetIdentifier: asset.localIdentifier,
+            customName: cleanName,
+            audioRecordingFileName: nil
+        )
+        
+        persistence.saveCollectionWithMediaItems(
             title: cleanName,
-            assetIdentifiers: [asset.localIdentifier],
+            mediaItems: [mediaItem],
             imageName: asset.mediaType == .video ? "video.circle" : "photo.circle",
             backgroundColor: asset.mediaType == .video ? "softBlue" : "sage"
         )
         
         // Find the newly created collection to get its ID
         if let newCollection = persistence.savedCollections.last {
-            // Create ActivityItem with the SAME ID as the saved collection
-            let newActivity: ActivityItem
-            if asset.mediaType == .video {
-                newActivity = ActivityItem(
-                    id: newCollection.id,  // ← Use saved collection's ID
-                    title: cleanName,
-                    imageName: "video.circle",
-                    videoAsset: asset,
-                    audioDescription: "A custom video from your library",
-                    backgroundColor: "softBlue"
-                )
-            } else {
-                newActivity = ActivityItem(
-                    id: newCollection.id,  // ← Use saved collection's ID
-                    title: cleanName,
-                    imageName: "photo.circle",
-                    photoAsset: asset,
-                    audioDescription: "A custom photo from your library",
-                    backgroundColor: "sage"
-                )
-            }
+            let newActivity = ActivityItem(
+                id: newCollection.id,
+                title: cleanName,
+                imageName: asset.mediaType == .video ? "video.circle" : "photo.circle",
+                videoAssets: asset.mediaType == .video ? [asset] : nil,
+                photoAssets: asset.mediaType == .image ? [asset] : nil,
+                mediaItems: [mediaItem],
+                audioDescription: "A custom \(asset.mediaType == .video ? "video" : "photo") from your library",
+                backgroundColor: asset.mediaType == .video ? "softBlue" : "sage"
+            )
             
             activityItemCollection.append(newActivity)
         }

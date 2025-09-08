@@ -247,57 +247,30 @@ class VideoCollectionPersistence: ObservableObject {
     
     // MARK: - Convert to ActivityItems
     
+    // instead of collapsing to single videoAsset/photoAsset when count == 1.
     func convertToActivityItems() async -> [ActivityItem] {
         var activityItems: [ActivityItem] = []
         
         for collection in savedCollections {
-            // Use the computed property that handles both old and new formats
             let identifiersToFetch = collection.allAssetIdentifiers
             
             if let validAssets = await getValidAssets(from: identifiersToFetch), !validAssets.isEmpty {
-                
                 let videoAssets = validAssets.filter { $0.mediaType == .video }
                 let photoAssets = validAssets.filter { $0.mediaType == .image }
                 
-                let activityItem: ActivityItem
-                
-                if videoAssets.count == 1 && photoAssets.isEmpty {
-                    // Single video - PRESERVE collection.id
-                    activityItem = ActivityItem(
-                        id: collection.id,
-                        title: collection.title,
-                        imageName: collection.imageName,
-                        videoAsset: videoAssets.first!,
-                        audioDescription: collection.audioDescription,
-                        backgroundColor: collection.backgroundColor
-                    )
-                } else if photoAssets.count == 1 && videoAssets.isEmpty {
-                    // Single photo - PRESERVE collection.id
-                    activityItem = ActivityItem(
-                        id: collection.id,
-                        title: collection.title,
-                        imageName: collection.imageName,
-                        photoAsset: photoAssets.first!,
-                        audioDescription: collection.audioDescription,
-                        backgroundColor: collection.backgroundColor
-                    )
-                } else {
-                    // Multi-item collection (video, photo, or mixed) - PRESERVE collection.id
-                    activityItem = ActivityItem(
-                        id: collection.id,
-                        title: collection.title,
-                        imageName: collection.imageName,
-                        videoAssets: videoAssets.isEmpty ? nil : videoAssets,
-                        photoAssets: photoAssets.isEmpty ? nil : photoAssets,
-                        mediaItems: collection.mediaItems,
-                        audioDescription: collection.audioDescription,
-                        backgroundColor: collection.backgroundColor
-                    )
-                }
+                let activityItem = ActivityItem(
+                    id: collection.id,
+                    title: collection.title,
+                    imageName: collection.imageName,
+                    videoAssets: videoAssets.isEmpty ? nil : videoAssets,
+                    photoAssets: photoAssets.isEmpty ? nil : photoAssets,
+                    mediaItems: collection.mediaItems,
+                    audioDescription: collection.audioDescription,
+                    backgroundColor: collection.backgroundColor
+                )
                 
                 activityItems.append(activityItem)
             } else {
-                // Handle missing media - could show placeholder or remove
                 print("⚠️ Collection '\(collection.title)' has no valid media")
             }
         }

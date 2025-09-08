@@ -106,8 +106,8 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "374"
             endingLineNumber = "374"
-            landmarkName = "VideoCollectionPersistence"
-            landmarkType = "3">
+            landmarkName = "updateMediaItemInCollection(_:updatedMediaItem:)"
+            landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -138,7 +138,7 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "407"
             endingLineNumber = "407"
-            landmarkName = "updateMediaItemInCollection(_:updatedMediaItem:)"
+            landmarkName = "updateMediaItemName(_:mediaItemId:newName:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
