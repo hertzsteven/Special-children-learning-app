@@ -366,15 +366,9 @@ struct FullScreenMediaSelectionView: View {
         print("selectedMedia set contains: \(selectedMedia)")
         print("mediaItems count: \(mediaItems.count)")
         
-        if allAssets.count == 1 {
-            // Single item selection - still use the old flow
-            let singleAsset = allAssets.first!
-            print("Single asset selected: \(singleAsset.localIdentifier)")
-            onVideoSelected(singleAsset)
-            dismiss()
-        } else if allAssets.count > 1 {
-            // Multiple items - automatically go to individual naming
-            print("Multiple assets selected, opening individual naming with \(allAssets.count) assets")
+        if allAssets.count >= 1 {
+            // Treat single and multiple selections the same: go to individual naming
+            print("Opening individual naming with \(allAssets.count) assets")
             pendingAssets = allAssets
             // Add a small delay to ensure pendingAssets is set before showing sheet
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
