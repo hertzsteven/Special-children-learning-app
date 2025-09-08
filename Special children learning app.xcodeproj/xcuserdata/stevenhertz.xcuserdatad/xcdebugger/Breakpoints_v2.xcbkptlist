@@ -14,9 +14,9 @@
             filePath = "Special children learning app/Views/MediaItemEditView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "358"
-            endingLineNumber = "358"
-            landmarkName = "saveChanges()"
+            startingLineNumber = "366"
+            endingLineNumber = "366"
+            landmarkName = "useProjectAudio(_:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -30,9 +30,9 @@
             filePath = "Special children learning app/Views/MediaItemEditView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "365"
-            endingLineNumber = "365"
-            landmarkName = "saveChanges()"
+            startingLineNumber = "373"
+            endingLineNumber = "373"
+            landmarkName = "playCurrentAudio()"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -40,15 +40,15 @@
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
             uuid = "69E8DA04-8940-4D96-8490-F66E43BCDD63"
-            shouldBeEnabled = "Yes"
+            shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Special children learning app/Views/MediaItemEditView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "335"
-            endingLineNumber = "335"
-            landmarkName = "playCurrentAudio()"
+            startingLineNumber = "343"
+            endingLineNumber = "343"
+            landmarkName = "loadThumbnail()"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -78,8 +78,8 @@
             filePath = "Special children learning app/Views/ContentView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "119"
-            endingLineNumber = "119"
+            startingLineNumber = "135"
+            endingLineNumber = "135"
             landmarkName = "body"
             landmarkType = "24">
          </BreakpointContent>
@@ -95,9 +95,7 @@
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "680"
-            endingLineNumber = "680"
-            landmarkName = "unknown"
-            landmarkType = "0">
+            endingLineNumber = "680">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -158,8 +156,8 @@
             filePath = "Special children learning app/Views/ContentView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "124"
-            endingLineNumber = "124"
+            startingLineNumber = "140"
+            endingLineNumber = "140"
             landmarkName = "body"
             landmarkType = "24">
          </BreakpointContent>
@@ -174,8 +172,8 @@
             filePath = "Special children learning app/Views/ContentView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "127"
-            endingLineNumber = "127"
+            startingLineNumber = "143"
+            endingLineNumber = "143"
             landmarkName = "body"
             landmarkType = "24">
          </BreakpointContent>
@@ -242,36 +240,6 @@
             endingLineNumber = "209"
             landmarkName = "body"
             landmarkType = "24">
-            <Locations>
-               <Location
-                  uuid = "605473C0-F1EB-4242-9186-9437C7CC028F - 1594ebc0aef0b6f7"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "Special_children_learning_app.CollectionEditView.body.getter : some"
-                  moduleName = "Special children learning app.debug.dylib"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/stevenhertz/Documents/Special%20children%20learning%20app/Special%20children%20learning%20app/Views/CollectionEditView.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "209"
-                  endingLineNumber = "209">
-               </Location>
-               <Location
-                  uuid = "605473C0-F1EB-4242-9186-9437C7CC028F - 7dfd0c3896a3178f"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "closure #8 () -&gt; Swift.Optional&lt;Special_children_learning_app.EnhancedMediaNamingView&gt; in Special_children_learning_app.CollectionEditView.body.getter : some"
-                  moduleName = "Special children learning app.debug.dylib"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/stevenhertz/Documents/Special%20children%20learning%20app/Special%20children%20learning%20app/Views/CollectionEditView.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "210"
-                  endingLineNumber = "210">
-               </Location>
-            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -358,7 +326,7 @@
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
             uuid = "451BB969-24B2-41E4-B8AB-5D19DC17CE10"
-            shouldBeEnabled = "Yes"
+            shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Special children learning app/Views/CollectionEditView.swift"

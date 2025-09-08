@@ -70,7 +70,7 @@ struct ActivityCardView: View {
                     onEdit()
                 }) {
                     Image(systemName: "pencil.circle.fill")
-                        .font(.title2)
+                        .font(.system(size: 44))
                         .foregroundColor(.blue)
                         .background(Color.white)
                         .clipShape(Circle())
