@@ -9,7 +9,7 @@ import SwiftUI
 import Photos
 
 struct CollectionEditView: View {
-    let activity: ActivityItem
+    let activityItem: ActivityItem
     let onCollectionUpdated: (ActivityItem) -> Void
     
     @State private var mediaItems: [SavedMediaItem]
@@ -19,8 +19,11 @@ struct CollectionEditView: View {
     
     init(activity: ActivityItem, onCollectionUpdated: @escaping (ActivityItem) -> Void) {
         print("-----",activity.title)
+        print("-----",activity.id)
+        dump(activity)
+
         print("-----")
-        self.activity = activity
+        self.activityItem = activity
         self.onCollectionUpdated = onCollectionUpdated
         self._mediaItems = State(initialValue: activity.mediaItems ?? [])
     }
@@ -81,7 +84,7 @@ struct CollectionEditView: View {
         .listStyle(PlainListStyle())
         .toolbar {
             ToolbarItem(placement: .principal) {
-                Text("Edit '\(activity.title)'").font(.headline)
+                Text("Edit '\(activityItem.title)'").font(.headline)
             }
             ToolbarItem(placement: .navigationBarTrailing) {
                 EditButton()
@@ -97,11 +100,15 @@ struct CollectionEditView: View {
                     onSave: { updatedItem in
                         // Update local state
                         if let index = mediaItems.firstIndex(where: { $0.id == updatedItem.id }) {
-                            mediaItems[index] = updatedItem
+                            mediaItems.remove(at: index)
+                            mediaItems.insert(updatedItem, at: index)
+//                            mediaItems[index].customName = updatedItem.customName
+                            dump(mediaItems[index])
+                            print(index)
                         }
                         
                         // Persist change
-                        VideoCollectionPersistence.shared.updateMediaItemInCollection(activity.id, updatedMediaItem: updatedItem)
+                        VideoCollectionPersistence.shared.updateMediaItemInCollection(activityItem.id, updatedMediaItem: updatedItem)
                         
                         // Notify parent view
                         notifyParentOfUpdate()
@@ -143,7 +150,7 @@ struct CollectionEditView: View {
     
     private func moveItems(from source: IndexSet, to destination: Int) {
         mediaItems.move(fromOffsets: source, toOffset: destination)
-        VideoCollectionPersistence.shared.updateCollection(activity.id, with: mediaItems)
+        VideoCollectionPersistence.shared.updateCollection(activityItem.id, with: mediaItems)
         notifyParentOfUpdate()
     }
     
@@ -152,13 +159,13 @@ struct CollectionEditView: View {
         mediaItems.remove(atOffsets: offsets)
         
         for item in itemsToDelete {
-            VideoCollectionPersistence.shared.removeMediaItemFromCollection(activity.id, mediaItemId: item.id)
+            VideoCollectionPersistence.shared.removeMediaItemFromCollection(activityItem.id, mediaItemId: item.id)
         }
         notifyParentOfUpdate()
     }
     
     private func notifyParentOfUpdate() {
-        let updatedActivity = activity.updatingMediaItems(with: mediaItems)
+        let updatedActivity = activityItem.updatingMediaItems(with: mediaItems)
         onCollectionUpdated(updatedActivity)
     }
 }

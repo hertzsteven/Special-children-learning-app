@@ -12,7 +12,7 @@ import Photos
 struct SavedMediaItem: Codable, Identifiable, Hashable {
     let id: UUID
     let assetIdentifier: String
-    let customName: String
+    var customName: String
     let audioRecordingFileName: String? // NEW: Optional audio recording
     
     init(assetIdentifier: String, customName: String, audioRecordingFileName: String? = nil) {
@@ -241,8 +241,9 @@ class VideoCollectionPersistence: ObservableObject {
                 let activityItem: ActivityItem
                 
                 if videoAssets.count == 1 && photoAssets.isEmpty {
-                    // Single video
+                    // Single video - PRESERVE collection.id
                     activityItem = ActivityItem(
+                        id: collection.id,
                         title: collection.title,
                         imageName: collection.imageName,
                         videoAsset: videoAssets.first!,
@@ -250,39 +251,19 @@ class VideoCollectionPersistence: ObservableObject {
                         backgroundColor: collection.backgroundColor
                     )
                 } else if photoAssets.count == 1 && videoAssets.isEmpty {
-                    // Single photo
+                    // Single photo - PRESERVE collection.id
                     activityItem = ActivityItem(
+                        id: collection.id,
                         title: collection.title,
                         imageName: collection.imageName,
                         photoAsset: photoAssets.first!,
                         audioDescription: collection.audioDescription,
                         backgroundColor: collection.backgroundColor
                     )
-                } else if !videoAssets.isEmpty && photoAssets.isEmpty {
-                    // Video collection - NOW includes mediaItems
-                    activityItem = ActivityItem(
-                        title: collection.title,
-                        imageName: collection.imageName,
-                        videoAssets: videoAssets,
-                        photoAssets: nil,
-                        mediaItems: collection.mediaItems,
-                        audioDescription: collection.audioDescription,
-                        backgroundColor: collection.backgroundColor
-                    )
-                } else if videoAssets.isEmpty && !photoAssets.isEmpty {
-                    // Photo collection - NOW includes mediaItems
-                    activityItem = ActivityItem(
-                        title: collection.title,
-                        imageName: collection.imageName,
-                        videoAssets: nil,
-                        photoAssets: photoAssets,
-                        mediaItems: collection.mediaItems,
-                        audioDescription: collection.audioDescription,
-                        backgroundColor: collection.backgroundColor
-                    )
                 } else {
-                    // Mixed media collection - NOW includes mediaItems
+                    // Multi-item collection (video, photo, or mixed) - PRESERVE collection.id
                     activityItem = ActivityItem(
+                        id: collection.id,
                         title: collection.title,
                         imageName: collection.imageName,
                         videoAssets: videoAssets.isEmpty ? nil : videoAssets,
@@ -403,6 +384,8 @@ class VideoCollectionPersistence: ObservableObject {
                 // Force a published update - this should trigger UI refresh
                 objectWillChange.send()
             }
+        } else {
+            print(">>> Failed to find collection with ID '\(collectionId)'")
         }
     }
     

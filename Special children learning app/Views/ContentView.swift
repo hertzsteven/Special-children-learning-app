@@ -13,7 +13,7 @@ struct ContentView: View {
     @State private var showingVideo = false
     @State private var showingVideoSelection = false
     @State private var showingSettings = false
-    @State private var customVideos: [ActivityItem] = []
+    @State private var activityItemCollection: [ActivityItem] = []
     @State private var showToast = false
     @State private var toastMessage = ""
     @State private var showingSingleVideoNameDialog = false
@@ -40,7 +40,7 @@ struct ContentView: View {
     
     // Combine sample activities with custom videos
     var allActivities: [ActivityItem] {
-        ActivityItem.sampleActivities + customVideos
+        ActivityItem.sampleActivities + activityItemCollection
     }
     
     var body: some View {
@@ -115,14 +115,14 @@ struct ContentView: View {
                 collectionSelectionOverlay
             }
             .navigationDestination(for: ActivityItem.self) { activity in
-                let _ = print(activity.title)
+                let _ = print(activity.title, activity.id)
                 let _ = print("-----")
                 CollectionEditView(
                     activity: activity,
                     onCollectionUpdated: { updatedActivity in
                         // Update the activity in customVideos array
-                        if let index = customVideos.firstIndex(where: { $0.id == activity.id }) {
-                            customVideos[index] = updatedActivity
+                        if let index = activityItemCollection.firstIndex(where: { $0.id == activity.id }) {
+                            activityItemCollection[index] = updatedActivity
                         }
                     }
                 )
@@ -298,12 +298,12 @@ struct ContentView: View {
     }
 
     private func isCustom(_ activity: ActivityItem) -> Bool {
-        customVideos.contains(where: { $0.id == activity.id })
+        activityItemCollection.contains(where: { $0.id == activity.id })
     }
 
     private func loadSavedCollections() async {
         let savedActivityItems = await persistence.convertToActivityItems()
-        customVideos = savedActivityItems
+        activityItemCollection = savedActivityItems
     }
     
     private func addSingleVideo(from asset: PHAsset, name: String) {
@@ -337,7 +337,7 @@ struct ContentView: View {
             )
         }
         
-        customVideos.append(newActivity)
+        activityItemCollection.append(newActivity)
         
         // Show confirmation
         let mediaType = asset.mediaType == .video ? "video" : "photo"
@@ -386,7 +386,7 @@ struct ContentView: View {
             )
             
             await MainActor.run {
-                customVideos.append(newActivity)
+                activityItemCollection.append(newActivity)
                 
                 // Show confirmation
                 toastMessage = "'\(finalName)' created with \(allAssets.count) items!"
@@ -398,7 +398,7 @@ struct ContentView: View {
     }
 
     private func deleteCustomVideo(_ activity: ActivityItem) {
-        customVideos.removeAll { $0.id == activity.id }
+        activityItemCollection.removeAll { $0.id == activity.id }
         
         if let matchingCollection = findMatchingSavedCollection(for: activity) {
             persistence.deleteCollection(matchingCollection)
@@ -416,7 +416,7 @@ struct ContentView: View {
             persistence.renameCollection(matchingCollection, newTitle: cleanName)
             
             // UPDATE: Preserve assets and mediaItems when updating local ActivityItem
-            if let index = customVideos.firstIndex(where: { $0.id == activity.id }) {
+            if let index = activityItemCollection.firstIndex(where: { $0.id == activity.id }) {
                 let updatedActivity: ActivityItem
                 
                 if let videoAssets = activity.videoAssets, let photoAssets = activity.photoAssets {
@@ -471,7 +471,7 @@ struct ContentView: View {
                     )
                 }
                 
-                customVideos[index] = updatedActivity
+                activityItemCollection[index] = updatedActivity
             }
             
             toastMessage = "Collection renamed to '\(cleanName)'"
