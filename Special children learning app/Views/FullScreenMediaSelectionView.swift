@@ -34,6 +34,8 @@ struct FullScreenMediaSelectionView: View {
     
     private let sidebarWidth: CGFloat = 280
     
+    let skipCollectionNaming: Bool
+    
     var selectedVideoAssets: [PHAsset] {
         mediaItems.compactMap { item in
             selectedMedia.contains(item.id) && item.isVideo ? item.asset : nil
@@ -65,10 +67,12 @@ struct FullScreenMediaSelectionView: View {
     // Updated initializer
     init(
         onVideoSelected: @escaping (PHAsset) -> Void,
-        onIndividualMediaSelected: @escaping ([SavedMediaItem], String) -> Void
+        onIndividualMediaSelected: @escaping ([SavedMediaItem], String) -> Void,
+        skipCollectionNaming: Bool = true
     ) {
         self.onVideoSelected = onVideoSelected
         self.onIndividualMediaSelected = onIndividualMediaSelected
+        self.skipCollectionNaming = skipCollectionNaming
     }
     
     var body: some View {
@@ -283,7 +287,8 @@ struct FullScreenMediaSelectionView: View {
                     onCancel: {
                         showingIndividualNaming = false
                         pendingAssets = []
-                    }
+                    },
+                    skipCollectionNaming: skipCollectionNaming
                 )
             } else {
                 // Fallback view if no assets

@@ -153,7 +153,8 @@ struct ContentView: View {
                 onIndividualMediaSelected: { namedItems, collectionName in
                     // Handle the new collection creation
                     addNamedMediaCollection(namedItems: namedItems, collectionName: collectionName)
-                }
+                },
+                skipCollectionNaming: false 
             )
         }
         .sheet(isPresented: $showingSettings) {
