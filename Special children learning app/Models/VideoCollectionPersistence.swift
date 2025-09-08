@@ -203,6 +203,27 @@ class VideoCollectionPersistence: ObservableObject {
         }
     }
     
+    // NEW: Rename collection by ID (for use in CollectionEditView)
+    func renameCollectionById(_ collectionId: UUID, newTitle: String) {
+        if let index = savedCollections.firstIndex(where: { $0.id == collectionId }) {
+            let collection = savedCollections[index]
+            let updatedCollection = SavedVideoCollection(
+                id: collection.id,
+                title: newTitle,
+                imageName: collection.imageName,
+                assetIdentifiers: collection.assetIdentifiers,
+                mediaItems: collection.mediaItems,
+                backgroundColor: collection.backgroundColor,
+                createdDate: collection.createdDate
+            )
+            savedCollections[index] = updatedCollection
+            saveCollections()
+            print("✅ Renamed collection to '\(newTitle)'")
+        } else {
+            print("❌ Could not find collection with ID '\(collectionId)' to rename")
+        }
+    }
+
     private func saveCollections() {
         do {
             let data = try JSONEncoder().encode(savedCollections)

@@ -16,6 +16,9 @@ struct CollectionEditView: View {
     @State private var thumbnails: [String: UIImage] = [:]
     @State private var showingMediaItemEditor = false
     @State private var itemToEdit: SavedMediaItem?
+    @State private var showingRenameAlert = false
+    @State private var newCollectionName = ""
+    @State private var currentTitle: String
     
     init(activity: ActivityItem, onCollectionUpdated: @escaping (ActivityItem) -> Void) {
         print("-----",activity.title)
@@ -26,6 +29,8 @@ struct CollectionEditView: View {
         self.activityItem = activity
         self.onCollectionUpdated = onCollectionUpdated
         self._mediaItems = State(initialValue: activity.mediaItems ?? [])
+        self._newCollectionName = State(initialValue: activity.title)
+        self._currentTitle = State(initialValue: activity.title)
     }
     
     var body: some View {
@@ -84,11 +89,36 @@ struct CollectionEditView: View {
         .listStyle(PlainListStyle())
         .toolbar {
             ToolbarItem(placement: .principal) {
-                Text("Edit '\(activityItem.title)'").font(.headline)
+                Button(action: {
+                    newCollectionName = currentTitle
+                    showingRenameAlert = true
+                }) {
+                    HStack(spacing: 4) {
+                        Text("Edit '\(currentTitle)'")
+                            .font(.headline)
+                        Image(systemName: "pencil")
+                            .font(.caption)
+                    }
+                }
             }
             ToolbarItem(placement: .navigationBarTrailing) {
                 EditButton()
             }
+        }
+        .alert("Rename Collection", isPresented: $showingRenameAlert) {
+            TextField("Collection name", text: $newCollectionName)
+                .textInputAutocapitalization(.words)
+            
+            Button("Save") {
+                renameCollection()
+            }
+            .disabled(newCollectionName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            
+            Button("Cancel", role: .cancel) {
+                newCollectionName = currentTitle
+            }
+        } message: {
+            Text("Enter a new name for your collection")
         }
         .onAppear {
             loadThumbnails()
@@ -168,6 +198,24 @@ struct CollectionEditView: View {
         let updatedActivity = activityItem.updatingMediaItems(with: mediaItems)
         onCollectionUpdated(updatedActivity)
     }
+
+    private func renameCollection() {
+        let cleanName = newCollectionName.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Update local title state first for immediate UI update
+        currentTitle = cleanName
+        
+        // Update in persistence
+        VideoCollectionPersistence.shared.renameCollectionById(activityItem.id, newTitle: cleanName)
+        
+        // Create updated activity with new name but preserve all other properties
+        let updatedActivity = activityItem.updatingTitle(to: cleanName)
+        
+        // Notify parent view
+        onCollectionUpdated(updatedActivity)
+        
+        print("✅ Collection renamed to '\(cleanName)'")
+    }
 }
 
 extension ActivityItem {
@@ -194,6 +242,79 @@ extension ActivityItem {
         updatedActivity.photoAssets = assets.filter { $0.mediaType == .image }
         
         return updatedActivity
+    }
+
+    func updatingTitle(to newTitle: String) -> ActivityItem {
+        // Create a new ActivityItem with updated title but preserve ALL properties
+        if let videoAssets = self.videoAssets, let photoAssets = self.photoAssets {
+            // Mixed media collection
+            return ActivityItem(
+                id: self.id,
+                title: newTitle,
+                imageName: self.imageName,
+                videoAssets: videoAssets,
+                photoAssets: photoAssets,
+                mediaItems: self.mediaItems,
+                audioDescription: self.audioDescription,
+                backgroundColor: self.backgroundColor
+            )
+        } else if let videoAssets = self.videoAssets {
+            // Video collection
+            return ActivityItem(
+                id: self.id,
+                title: newTitle,
+                imageName: self.imageName,
+                videoAssets: videoAssets,
+                photoAssets: nil,
+                mediaItems: self.mediaItems,
+                audioDescription: self.audioDescription,
+                backgroundColor: self.backgroundColor
+            )
+        } else if let photoAssets = self.photoAssets {
+            // Photo collection
+            return ActivityItem(
+                id: self.id,
+                title: newTitle,
+                imageName: self.imageName,
+                videoAssets: nil,
+                photoAssets: photoAssets,
+                mediaItems: self.mediaItems,
+                audioDescription: self.audioDescription,
+                backgroundColor: self.backgroundColor
+            )
+        } else if let videoAsset = self.videoAsset {
+            // Single video
+            return ActivityItem(
+                id: self.id,
+                title: newTitle,
+                imageName: self.imageName,
+                videoAsset: videoAsset,
+                audioDescription: self.audioDescription,
+                backgroundColor: self.backgroundColor
+            )
+        } else if let photoAsset = self.photoAsset {
+            // Single photo
+            return ActivityItem(
+                id: self.id,
+                title: newTitle,
+                imageName: self.imageName,
+                photoAsset: photoAsset,
+                audioDescription: self.audioDescription,
+                backgroundColor: self.backgroundColor
+            )
+        } else {
+            // Fallback - preserve as much as possible
+            return ActivityItem(
+                id: self.id,
+                title: newTitle,
+                imageName: self.imageName,
+                videoAssets: nil,
+                photoAssets: nil,
+                mediaItems: self.mediaItems,
+                audioDescription: self.audioDescription,
+                backgroundColor: self.backgroundColor
+            )
+        }
     }
 }
 
