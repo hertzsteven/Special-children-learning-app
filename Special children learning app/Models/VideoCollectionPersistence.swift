@@ -248,7 +248,7 @@ class VideoCollectionPersistence: ObservableObject {
     // MARK: - Convert to ActivityItems
     
     // instead of collapsing to single videoAsset/photoAsset when count == 1.
-    func convertToActivityItems() async -> [MediaCollection] {
+    func convertToMediaCollectionItems() async -> [MediaCollection] {
         var mediaCollectionItems: [MediaCollection] = []
         
         for collection in savedCollections {

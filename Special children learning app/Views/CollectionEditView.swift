@@ -16,7 +16,7 @@ import SwiftUI
 import Photos
 
 struct CollectionEditView: View {
-    let activityItem: MediaCollection
+    let mediaCollectionItem: MediaCollection
     let onCollectionUpdated: (MediaCollection) -> Void
     
     @State private var mediaItems: [SavedMediaItem]
@@ -33,7 +33,7 @@ struct CollectionEditView: View {
     @State private var pendingNewAssets: [PHAsset] = []
     
     init(mediaCollection: MediaCollection, onCollectionUpdated: @escaping (MediaCollection) -> Void) {
-        self.activityItem = mediaCollection
+        self.mediaCollectionItem = mediaCollection
         self.onCollectionUpdated = onCollectionUpdated
         self._mediaItems = State(initialValue: mediaCollection.mediaItems ?? [])
         self._newCollectionName = State(initialValue: mediaCollection.title)
@@ -166,7 +166,7 @@ struct CollectionEditView: View {
             if let itemToEdit = itemToEdit {
                 MediaItemEditView(
                     mediaItem: itemToEdit,
-                    collectionId: activityItem.id,
+                    collectionId: mediaCollectionItem.id,
                     onSave: { updatedItem in
                         // The updatedItem from onSave now contains the LATEST name and audio state.
                         // Simply update local state with this item.
@@ -177,7 +177,7 @@ struct CollectionEditView: View {
                         }
                         
                         // Persist change
-                        VideoCollectionPersistence.shared.updateMediaItemInCollection(activityItem.id, updatedMediaItem: updatedItem)
+                        VideoCollectionPersistence.shared.updateMediaItemInCollection(mediaCollectionItem.id, updatedMediaItem: updatedItem)
                         
                         // Notify parent view
                         notifyParentOfUpdate()
@@ -235,7 +235,7 @@ struct CollectionEditView: View {
         mediaItems.append(contentsOf: namedItems)
         
         // Update persistence
-        VideoCollectionPersistence.shared.updateCollection(activityItem.id, with: mediaItems)
+        VideoCollectionPersistence.shared.updateCollection(mediaCollectionItem.id, with: mediaItems)
         
         // Notify parent view
         notifyParentOfUpdate()
@@ -273,7 +273,7 @@ struct CollectionEditView: View {
     
     private func moveItems(from source: IndexSet, to destination: Int) {
         mediaItems.move(fromOffsets: source, toOffset: destination)
-        VideoCollectionPersistence.shared.updateCollection(activityItem.id, with: mediaItems)
+        VideoCollectionPersistence.shared.updateCollection(mediaCollectionItem.id, with: mediaItems)
         notifyParentOfUpdate()
     }
     
@@ -282,14 +282,14 @@ struct CollectionEditView: View {
         mediaItems.remove(atOffsets: offsets)
         
         for item in itemsToDelete {
-            VideoCollectionPersistence.shared.removeMediaItemFromCollection(activityItem.id, mediaItemId: item.id)
+            VideoCollectionPersistence.shared.removeMediaItemFromCollection(mediaCollectionItem.id, mediaItemId: item.id)
         }
         notifyParentOfUpdate()
     }
     
     private func notifyParentOfUpdate() {
-        let updatedActivity = activityItem.updatingMediaItems(with: mediaItems)
-        onCollectionUpdated(updatedActivity)
+        let updatedmediaCollection = mediaCollectionItem.updatingMediaItems(with: mediaItems)
+        onCollectionUpdated(updatedmediaCollection)
     }
 
     private func renameCollection() {
@@ -299,13 +299,13 @@ struct CollectionEditView: View {
         currentTitle = cleanName
         
         // Update in persistence
-        VideoCollectionPersistence.shared.renameCollectionById(activityItem.id, newTitle: cleanName)
+        VideoCollectionPersistence.shared.renameCollectionById(mediaCollectionItem.id, newTitle: cleanName)
         
         // Create updated activity with new name but preserve all other properties
-        let updatedActivity = activityItem.updatingTitle(to: cleanName)
+        let updatedmediaCollection = mediaCollectionItem.updatingTitle(to: cleanName)
         
         // Notify parent view
-        onCollectionUpdated(updatedActivity)
+        onCollectionUpdated(updatedmediaCollection)
         
         print("✅ Collection renamed to '\(cleanName)'")
     }

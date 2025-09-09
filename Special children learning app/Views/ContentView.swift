@@ -329,7 +329,7 @@ struct ContentView: View {
     }
 
     private func loadSavedCollections() async {
-        let savedMediaCollectionItems = await persistence.convertToActivityItems()
+        let savedMediaCollectionItems = await persistence.convertToMediaCollectionItems()
         mediaCollectionItemCollection = savedMediaCollectionItems
     }
     
