@@ -63,31 +63,46 @@ struct ContentView: View {
                                 Text("Tap an activity to see and learn")
                                     .font(.title3)
                                     .foregroundColor(.secondary)
+                                
+                                Button(action: {
+                                    showingVideoSelection = true
+                                }) {
+                                    Image(systemName: "plus.circle.fill")
+                                        .font(.largeTitle)
+                                        .foregroundColor(.blue)
+                                        .background(
+                                            Circle()
+                                                .fill(Color.white)
+                                                .frame(width: 48, height: 48)
+                                        )
+                                        .shadow(color: .blue.opacity(0.3), radius: 2, x: 0, y: 1)
+                                }
+                                .padding(.vertical, 32)
                             }
                             
                             Spacer()
                             
-                            Button(action: {
-                                showingVideoSelection = true
-                            }) {
-                                Image(systemName: "plus.circle.fill")
-                                    .font(.title2)
-                                    .foregroundColor(.blue)
-                                    .background(
-                                        Circle()
-                                            .fill(Color.white)
-                                            .frame(width: 32, height: 32)
-                                    )
-                                    .shadow(color: .blue.opacity(0.3), radius: 2, x: 0, y: 1)
-                            }
-                            .padding(.horizontal, 10)
-                            Button(action: {
-                                showingSettings = true
-                            }) {
-                                Image(systemName: "gearshape.fill")
-                                    .font(.title2)
-                                    .foregroundColor(.secondary)
-                            }
+//                            Button(action: {
+//                                showingVideoSelection = true
+//                            }) {
+//                                Image(systemName: "plus.circle.fill")
+//                                    .font(.title2)
+//                                    .foregroundColor(.blue)
+//                                    .background(
+//                                        Circle()
+//                                            .fill(Color.white)
+//                                            .frame(width: 32, height: 32)
+//                                    )
+//                                    .shadow(color: .blue.opacity(0.3), radius: 2, x: 0, y: 1)
+//                            }
+//                            .padding(.horizontal, 10)
+//                            Button(action: {
+//                                showingSettings = true
+//                            }) {
+//                                Image(systemName: "gearshape.fill")
+//                                    .font(.title2)
+//                                    .foregroundColor(.secondary)
+//                            }
 
                         }
                     }
@@ -148,7 +163,19 @@ struct ContentView: View {
                     }
                 )
             }
+            .toolbar {
+                ToolbarItem {
+                    Button(action: {
+                        showingSettings = true
+                    }) {
+                        Image(systemName: "gearshape.fill")
+                            .font(.title2)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
         }
+
         .preferredColorScheme(.light) // Always use light mode for consistency
         .fullScreenCover(isPresented: $showingVideoSelection) {
             FullScreenMediaSelectionView(
