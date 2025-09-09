@@ -11,7 +11,7 @@ import AVFoundation
 import Photos
 
 struct MediaCollectionPlayerView: View {
-    let activity: MediaCollection
+    let mediaCollection: MediaCollection
     let onDismiss: () -> Void
 
     @State private var currentPlayer: AVPlayer?
@@ -33,7 +33,7 @@ struct MediaCollectionPlayerView: View {
     @StateObject private var audioManager = AudioPlaybackManager.shared // NEW: Audio manager
 
     var totalVideos: Int {
-        activity.videoAssets?.count ?? 0
+        mediaCollection.videoAssets?.count ?? 0
     }
     
     var currentThumbnail: UIImage? {
@@ -47,9 +47,9 @@ struct MediaCollectionPlayerView: View {
     
     // NEW: Get current video's associated media item
     private var currentMediaItem: SavedMediaItem? {
-        guard let videoAssets = activity.videoAssets,
+        guard let videoAssets = mediaCollection.videoAssets,
               currentVideoIndex < videoAssets.count,
-              let mediaItems = activity.mediaItems else { return nil }
+              let mediaItems = mediaCollection.mediaItems else { return nil }
         
         let currentAsset = videoAssets[currentVideoIndex]
         return mediaItems.first { $0.assetIdentifier == currentAsset.localIdentifier }
@@ -61,8 +61,8 @@ struct MediaCollectionPlayerView: View {
             return mediaItem.customName
         }
         // Fallback to activity-level name lookup
-        guard let videoAssets = activity.videoAssets, currentVideoIndex < videoAssets.count else { return nil }
-        return activity.getMediaItemName(for: videoAssets[currentVideoIndex])
+        guard let videoAssets = mediaCollection.videoAssets, currentVideoIndex < videoAssets.count else { return nil }
+        return mediaCollection.getMediaItemName(for: videoAssets[currentVideoIndex])
     }
 
     var body: some View {
@@ -155,7 +155,7 @@ struct MediaCollectionPlayerView: View {
                                     .fontWeight(.bold)
                                     .foregroundColor(.white)
                             } else {
-                                Text(activity.title)
+                                Text(mediaCollection.title)
                                     .font(.title)
                                     .fontWeight(.bold)
                                     .foregroundColor(.white)
@@ -235,7 +235,7 @@ struct MediaCollectionPlayerView: View {
     }
 
     private func setupVideoQueue() {
-        guard let videoAssets = activity.videoAssets else { return }
+        guard let videoAssets = mediaCollection.videoAssets else { return }
         
         isLoadingVideos = true
         
@@ -350,7 +350,7 @@ struct MediaCollectionPlayerView: View {
     }
     
     private func generateThumbnailsFromAllVideos() async {
-        guard let videoAssets = activity.videoAssets else { return }
+        guard let videoAssets = mediaCollection.videoAssets else { return }
         
         var thumbnails: [UIImage] = []
         
@@ -447,7 +447,7 @@ struct FullScreenSinglePlayerView: UIViewRepresentable {
 
 #Preview {
     // This would need actual PHAssets for preview
-    MediaCollectionPlayerView(activity: MediaCollection.sampleActivities[0]) {
+    MediaCollectionPlayerView(mediaCollection: MediaCollection.sampleActivities[0]) {
         print("Dismiss video queue")
     }
 }

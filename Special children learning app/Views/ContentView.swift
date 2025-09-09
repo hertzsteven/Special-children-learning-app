@@ -277,7 +277,7 @@ struct ContentView: View {
     private var videoOverlay: some View {
         if showingVideo, let mediaCollection = selectedMediaCollection {
             if mediaCollection.isVideoCollection {
-                MediaCollectionPlayerView(activity: mediaCollection) {
+                MediaCollectionPlayerView(mediaCollection: mediaCollection) {
                     showingVideo = false
                     selectedMediaCollection = nil
                 }
@@ -287,7 +287,7 @@ struct ContentView: View {
                     selectedMediaCollection = nil
                 }
             } else if mediaCollection.isMixedMediaCollection {
-                MediaCollectionPlayerView(activity: mediaCollection) {
+                MediaCollectionPlayerView(mediaCollection: mediaCollection) {
                     showingVideo = false
                     selectedMediaCollection = nil
                 }
@@ -314,10 +314,10 @@ struct ContentView: View {
                     showingCollectionSelection = false
                     selectedMediaCollectionForSelection = nil
                 },
-                onSelectionComplete: { filteredActivity in
+                onSelectionComplete: { filteredMediaCollection in
                     showingCollectionSelection = false
                     selectedMediaCollectionForSelection = nil
-                    selectedMediaCollection = filteredActivity
+                    selectedMediaCollection = filteredMediaCollection
                     showingVideo = true
                 }
             )
@@ -329,8 +329,8 @@ struct ContentView: View {
     }
 
     private func loadSavedCollections() async {
-        let savedActivityItems = await persistence.convertToActivityItems()
-        mediaCollectionItemCollection = savedActivityItems
+        let savedMediaCollectionItems = await persistence.convertToActivityItems()
+        mediaCollectionItemCollection = savedMediaCollectionItems
     }
     
     private func addSingleVideo(from asset: PHAsset, name: String) {
@@ -351,7 +351,7 @@ struct ContentView: View {
         
         // Find the newly created collection to get its ID
         if let newCollection = persistence.savedCollections.last {
-            let newActivity = MediaCollection(
+            let newMediaCollection = MediaCollection(
                 id: newCollection.id,
                 title: cleanName,
                 imageName: asset.mediaType == .video ? "video.circle" : "photo.circle",
@@ -362,7 +362,7 @@ struct ContentView: View {
                 backgroundColor: asset.mediaType == .video ? "softBlue" : "sage"
             )
             
-            mediaCollectionItemCollection.append(newActivity)
+            mediaCollectionItemCollection.append(newMediaCollection)
         }
         
         // Show confirmation
@@ -403,8 +403,8 @@ struct ContentView: View {
             await MainActor.run {
                 // Find the newly created collection to get its ID
                 if let newCollection = persistence.savedCollections.last {
-                    // Create ActivityItem with the SAME ID as the saved collection
-                    let newActivity = MediaCollection(
+                    // Create MediaCollectionItem with the SAME ID as the saved collection
+                    let newMediaCollection = MediaCollection(
                         id: newCollection.id,  // ← Use saved collection's ID
                         title: finalName,
                         imageName: "rectangle.stack",
@@ -415,7 +415,7 @@ struct ContentView: View {
                         backgroundColor: "warmBeige"
                     )
                     
-                    mediaCollectionItemCollection.append(newActivity)
+                    mediaCollectionItemCollection.append(newMediaCollection)
                 }
                 
                 // Show confirmation
@@ -445,12 +445,12 @@ struct ContentView: View {
             // Update in persistence
             persistence.renameCollection(matchingCollection, newTitle: cleanName)
             
-            // UPDATE: Preserve ID and all other properties when updating local ActivityItem
+            // UPDATE: Preserve ID and all other properties when updating local MediaCollectionItem
             if let index = mediaCollectionItemCollection.firstIndex(where: { $0.id == mediaCollection.id }) {
-                let updatedActivity: MediaCollection
+                let updatedMediaCollection: MediaCollection
                 
                 if let videoAssets = mediaCollection.videoAssets, let photoAssets = mediaCollection.photoAssets {
-                    updatedActivity = MediaCollection(
+                    updatedMediaCollection = MediaCollection(
                         id: mediaCollection.id,  // ← PRESERVE the original ID
                         title: cleanName,
                         imageName: mediaCollection.imageName,
@@ -461,7 +461,7 @@ struct ContentView: View {
                         backgroundColor: mediaCollection.backgroundColor
                     )
                 } else if let videoAssets = mediaCollection.videoAssets {
-                    updatedActivity = MediaCollection(
+                    updatedMediaCollection = MediaCollection(
                         id: mediaCollection.id,  // ← PRESERVE the original ID  
                         title: cleanName,
                         imageName: mediaCollection.imageName,
@@ -472,7 +472,7 @@ struct ContentView: View {
                         backgroundColor: mediaCollection.backgroundColor
                     )
                 } else if let photoAssets = mediaCollection.photoAssets {
-                    updatedActivity = MediaCollection(
+                    updatedMediaCollection = MediaCollection(
                         id: mediaCollection.id,  // ← PRESERVE the original ID
                         title: cleanName,
                         imageName: mediaCollection.imageName,
@@ -483,7 +483,7 @@ struct ContentView: View {
                         backgroundColor: mediaCollection.backgroundColor
                     )
                 } else if let videoAsset = mediaCollection.videoAsset {
-                    updatedActivity = MediaCollection(
+                    updatedMediaCollection = MediaCollection(
                         id: mediaCollection.id,  // ← PRESERVE the original ID
                         title: cleanName,
                         imageName: mediaCollection.imageName,
@@ -492,7 +492,7 @@ struct ContentView: View {
                         backgroundColor: mediaCollection.backgroundColor
                     )
                 } else if let photoAsset = mediaCollection.photoAsset {
-                    updatedActivity = MediaCollection(
+                    updatedMediaCollection = MediaCollection(
                         id: mediaCollection.id,  // ← PRESERVE the original ID
                         title: cleanName,
                         imageName: mediaCollection.imageName,
@@ -503,7 +503,7 @@ struct ContentView: View {
                 } else {
                     // For local video files, we need to add a UUID-preserving initializer for this case
                     // For now, use the general initializer with nil values
-                    updatedActivity = MediaCollection(
+                    updatedMediaCollection = MediaCollection(
                         id: mediaCollection.id,  // ← PRESERVE the original ID
                         title: cleanName,
                         imageName: mediaCollection.imageName,
@@ -515,8 +515,8 @@ struct ContentView: View {
                     )
                 }
                 
-                mediaCollectionItemCollection[index] = updatedActivity
-                print("✅ Updated ActivityItem '\(cleanName)' with preserved ID in ContentView")
+                mediaCollectionItemCollection[index] = updatedMediaCollection
+                print("✅ Updated MediaCollectionItem '\(cleanName)' with preserved ID in ContentView")
             }
             
             toastMessage = "Collection renamed to '\(cleanName)'"
