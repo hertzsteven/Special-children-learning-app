@@ -277,7 +277,7 @@ struct ContentView: View {
     private var videoOverlay: some View {
         if showingVideo, let activity = selectedActivity {
             if activity.isVideoCollection {
-                VideoQueuePlayerView(activity: activity) {
+                MediaCollectionPlayerView(activity: activity) {
                     showingVideo = false
                     selectedActivity = nil
                 }
@@ -287,7 +287,7 @@ struct ContentView: View {
                     selectedActivity = nil
                 }
             } else if activity.isMixedMediaCollection {
-                VideoQueuePlayerView(activity: activity) {
+                MediaCollectionPlayerView(activity: activity) {
                     showingVideo = false
                     selectedActivity = nil
                 }
