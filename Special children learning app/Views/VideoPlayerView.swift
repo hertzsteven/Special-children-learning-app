@@ -11,7 +11,7 @@ import AVFoundation
 import Photos
 
 struct VideoPlayerView: View {
-    let activity: ActivityItem
+    let activity: MediaCollection
     let onDismiss: () -> Void
 
     @State private var player: AVPlayer?
@@ -346,7 +346,7 @@ struct TileRevealMask: Shape {
 }
 
 #Preview {
-    VideoPlayerView(activity: ActivityItem.sampleActivities[0]) {
+    VideoPlayerView(activity: MediaCollection.sampleActivities[0]) {
         print("Dismiss video")
     }
 }

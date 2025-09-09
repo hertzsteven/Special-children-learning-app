@@ -9,9 +9,9 @@ import SwiftUI
 import Photos
 
 struct CollectionItemSelectionView: View {
-    let activity: ActivityItem
+    let activity: MediaCollection
     let onDismiss: () -> Void
-    let onSelectionComplete: (ActivityItem) -> Void
+    let onSelectionComplete: (MediaCollection) -> Void
     
     @State private var selectedItems: Set<String> = []
     @State private var mediaItems: [(asset: PHAsset, name: String?)] = []
@@ -259,7 +259,7 @@ struct CollectionItemSelectionView: View {
             selectedItems.contains(mediaItem.assetIdentifier)
         }
         
-        let filteredActivity = ActivityItem(
+        let filteredActivity = MediaCollection(
             title: activity.title,
             imageName: activity.imageName,
             videoAssets: selectedVideoAssets.isEmpty ? nil : selectedVideoAssets,
@@ -399,7 +399,7 @@ struct MediaItemRow: View {
 
 #Preview {
     CollectionItemSelectionView(
-        activity: ActivityItem(
+        activity: MediaCollection(
             title: "Sample Collection",
             imageName: "photo.stack",
             photoAssets: [],

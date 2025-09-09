@@ -9,7 +9,7 @@ import SwiftUI
 import Photos
 
 struct PhotoCollectionView: View {
-    let activity: ActivityItem
+    let activity: MediaCollection
     let onDismiss: () -> Void
     
     @State private var currentIndex = 0

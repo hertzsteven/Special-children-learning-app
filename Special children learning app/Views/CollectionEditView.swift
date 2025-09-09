@@ -16,8 +16,8 @@ import SwiftUI
 import Photos
 
 struct CollectionEditView: View {
-    let activityItem: ActivityItem
-    let onCollectionUpdated: (ActivityItem) -> Void
+    let activityItem: MediaCollection
+    let onCollectionUpdated: (MediaCollection) -> Void
     
     @State private var mediaItems: [SavedMediaItem]
     @State private var thumbnails: [String: UIImage] = [:]
@@ -32,7 +32,7 @@ struct CollectionEditView: View {
     @State private var showingAddMediaNaming = false
     @State private var pendingNewAssets: [PHAsset] = []
     
-    init(activity: ActivityItem, onCollectionUpdated: @escaping (ActivityItem) -> Void) {
+    init(activity: MediaCollection, onCollectionUpdated: @escaping (MediaCollection) -> Void) {
         self.activityItem = activity
         self.onCollectionUpdated = onCollectionUpdated
         self._mediaItems = State(initialValue: activity.mediaItems ?? [])
@@ -312,8 +312,8 @@ struct CollectionEditView: View {
 }
 
 // Extensions remain the same...
-extension ActivityItem {
-    func updatingMediaItems(with newItems: [SavedMediaItem]) -> ActivityItem {
+extension MediaCollection {
+    func updatingMediaItems(with newItems: [SavedMediaItem]) -> MediaCollection {
         // Re-fetch assets based on new order and items
         let identifiers = newItems.map { $0.assetIdentifier }
         let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: identifiers, options: nil)
@@ -329,7 +329,7 @@ extension ActivityItem {
         let videoAssets = assets.filter { $0.mediaType == .video }
         let photoAssets = assets.filter { $0.mediaType == .image }
         
-        return ActivityItem(
+        return MediaCollection(
             id: self.id,
             title: self.title,
             imageName: self.imageName,
@@ -341,11 +341,11 @@ extension ActivityItem {
         )
     }
 
-    func updatingTitle(to newTitle: String) -> ActivityItem {
+    func updatingTitle(to newTitle: String) -> MediaCollection {
         // Create a new ActivityItem with updated title but preserve ALL properties
         if let videoAssets = self.videoAssets, let photoAssets = self.photoAssets {
             // Mixed media collection
-            return ActivityItem(
+            return MediaCollection(
                 id: self.id,
                 title: newTitle,
                 imageName: self.imageName,
@@ -357,7 +357,7 @@ extension ActivityItem {
             )
         } else if let videoAssets = self.videoAssets {
             // Video collection
-            return ActivityItem(
+            return MediaCollection(
                 id: self.id,
                 title: newTitle,
                 imageName: self.imageName,
@@ -369,7 +369,7 @@ extension ActivityItem {
             )
         } else if let photoAssets = self.photoAssets {
             // Photo collection
-            return ActivityItem(
+            return MediaCollection(
                 id: self.id,
                 title: newTitle,
                 imageName: self.imageName,
@@ -381,7 +381,7 @@ extension ActivityItem {
             )
         } else if let videoAsset = self.videoAsset {
             // Single video
-            return ActivityItem(
+            return MediaCollection(
                 id: self.id,
                 title: newTitle,
                 imageName: self.imageName,
@@ -391,7 +391,7 @@ extension ActivityItem {
             )
         } else if let photoAsset = self.photoAsset {
             // Single photo
-            return ActivityItem(
+            return MediaCollection(
                 id: self.id,
                 title: newTitle,
                 imageName: self.imageName,
@@ -401,7 +401,7 @@ extension ActivityItem {
             )
         } else {
             // Fallback - preserve as much as possible
-            return ActivityItem(
+            return MediaCollection(
                 id: self.id,
                 title: newTitle,
                 imageName: self.imageName,
@@ -418,7 +418,7 @@ extension ActivityItem {
 #Preview {
     NavigationView {
         CollectionEditView(
-            activity: ActivityItem.sampleActivities.first(where: { $0.isVideoCollection })!,
+            activity: MediaCollection.sampleActivities.first(where: { $0.isVideoCollection })!,
             onCollectionUpdated: { _ in }
         )
     }

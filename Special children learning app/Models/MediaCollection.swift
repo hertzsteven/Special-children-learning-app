@@ -9,7 +9,7 @@ import Foundation
 import SwiftUI
 import Photos
 
-struct ActivityItem: Identifiable, Hashable, Equatable, Codable {
+struct MediaCollection: Identifiable, Hashable, Equatable, Codable {
     let id: UUID
     let title: String
     let imageName: String
@@ -253,8 +253,8 @@ struct ActivityItem: Identifiable, Hashable, Equatable, Codable {
         return mediaItems?.first { $0.assetIdentifier == asset.localIdentifier }?.customName
     }
     
-    static let sampleActivities: [ActivityItem] = [
-        ActivityItem(
+    static let sampleActivities: [MediaCollection] = [
+        MediaCollection(
             title: "Eat Breakfast",
             imageName: "fork.knife",
             videoFileName: "breakfast_video",
@@ -303,7 +303,7 @@ struct ActivityItem: Identifiable, Hashable, Equatable, Codable {
         hasher.combine(id)
     }
     
-    static func == (lhs: ActivityItem, rhs: ActivityItem) -> Bool {
+    static func == (lhs: MediaCollection, rhs: MediaCollection) -> Bool {
         return lhs.id == rhs.id
     }
 }

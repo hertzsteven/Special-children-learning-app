@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ActivityCardView: View {
-    let activity: ActivityItem
+    let activity: MediaCollection
     let onTap: () -> Void
     let onEdit: (() -> Void)? // NEW: Optional edit callback
     
@@ -130,7 +130,7 @@ struct CardButtonStyle: ButtonStyle {
 
 #Preview {
     ActivityCardView(
-        activity: ActivityItem.sampleActivities[0],
+        activity: MediaCollection.sampleActivities[0],
         onTap: {
             print("Card tapped")
         },

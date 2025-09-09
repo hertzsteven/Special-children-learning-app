@@ -11,7 +11,7 @@ import AVFoundation
 import Photos
 
 struct VideoQueuePlayerView: View {
-    let activity: ActivityItem
+    let activity: MediaCollection
     let onDismiss: () -> Void
 
     @State private var currentPlayer: AVPlayer?
@@ -447,7 +447,7 @@ struct FullScreenSinglePlayerView: UIViewRepresentable {
 
 #Preview {
     // This would need actual PHAssets for preview
-    VideoQueuePlayerView(activity: ActivityItem.sampleActivities[0]) {
+    VideoQueuePlayerView(activity: MediaCollection.sampleActivities[0]) {
         print("Dismiss video queue")
     }
 }

@@ -248,8 +248,8 @@ class VideoCollectionPersistence: ObservableObject {
     // MARK: - Convert to ActivityItems
     
     // instead of collapsing to single videoAsset/photoAsset when count == 1.
-    func convertToActivityItems() async -> [ActivityItem] {
-        var activityItems: [ActivityItem] = []
+    func convertToActivityItems() async -> [MediaCollection] {
+        var activityItems: [MediaCollection] = []
         
         for collection in savedCollections {
             let identifiersToFetch = collection.allAssetIdentifiers
@@ -258,7 +258,7 @@ class VideoCollectionPersistence: ObservableObject {
                 let videoAssets = validAssets.filter { $0.mediaType == .video }
                 let photoAssets = validAssets.filter { $0.mediaType == .image }
                 
-                let activityItem = ActivityItem(
+                let activityItem = MediaCollection(
                     id: collection.id,
                     title: collection.title,
                     imageName: collection.imageName,

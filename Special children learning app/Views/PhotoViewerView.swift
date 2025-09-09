@@ -9,7 +9,7 @@ import SwiftUI
 import Photos
 
 struct PhotoViewerView: View {
-    let activity: ActivityItem
+    let activity: MediaCollection
     let onDismiss: () -> Void
     
     @State private var displayImage: UIImage?
@@ -138,7 +138,7 @@ struct PhotoViewerView: View {
 
 #Preview {
     PhotoViewerView(
-        activity: ActivityItem(
+        activity: MediaCollection(
             title: "Sample Photo",
             imageName: "photo",
             videoFileName: "",

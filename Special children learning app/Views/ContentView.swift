@@ -9,11 +9,11 @@ import SwiftUI
 import Photos
 
 struct ContentView: View {
-    @State private var selectedActivity: ActivityItem?
+    @State private var selectedActivity: MediaCollection?
     @State private var showingVideo = false
     @State private var showingVideoSelection = false
     @State private var showingSettings = false
-    @State private var activityItemCollection: [ActivityItem] = []
+    @State private var activityItemCollection: [MediaCollection] = []
     @State private var showToast = false
     @State private var toastMessage = ""
     @State private var showingSingleVideoNameDialog = false
@@ -23,12 +23,12 @@ struct ContentView: View {
     @State private var pendingCollectionAssets: [PHAsset] = []
     @State private var showingRenameDialog = false
     @State private var renameText = ""
-    @State private var activityToRename: ActivityItem?
+    @State private var activityToRename: MediaCollection?
     @State private var showingCollectionSelection = false
-    @State private var selectedActivityForSelection: ActivityItem?
-    @State private var filteredActivityForViewing: ActivityItem?
+    @State private var selectedActivityForSelection: MediaCollection?
+    @State private var filteredActivityForViewing: MediaCollection?
     @State private var showingDeleteConfirm = false
-    @State private var activityToDelete: ActivityItem?
+    @State private var activityToDelete: MediaCollection?
     @State private var navPath = NavigationPath()
     
     @StateObject private var persistence = VideoCollectionPersistence.shared
@@ -39,8 +39,8 @@ struct ContentView: View {
     ]
     
     // Combine sample activities with custom videos
-    var allActivities: [ActivityItem] {
-        ActivityItem.sampleActivities + activityItemCollection
+    var allActivities: [MediaCollection] {
+        MediaCollection.sampleActivities + activityItemCollection
     }
     
     var body: some View {
@@ -123,7 +123,7 @@ struct ContentView: View {
                 }
             }
             
-            .navigationDestination(for: ActivityItem.self) { activity in
+            .navigationDestination(for: MediaCollection.self) { activity in
                 let _ = print(activity.title, activity.id)
                 let _ = print("-----")
                 CollectionEditView(
@@ -237,7 +237,7 @@ struct ContentView: View {
     }
 
     @ViewBuilder
-    private func activityCard(for activity: ActivityItem) -> some View {
+    private func activityCard(for activity: MediaCollection) -> some View {
         let editHandler: (() -> Void)? = isCustom(activity) ? { navPath.append(activity) } : nil
         
         ActivityCardView(
@@ -324,7 +324,7 @@ struct ContentView: View {
         }
     }
 
-    private func isCustom(_ activity: ActivityItem) -> Bool {
+    private func isCustom(_ activity: MediaCollection) -> Bool {
         activityItemCollection.contains(where: { $0.id == activity.id })
     }
 
@@ -351,7 +351,7 @@ struct ContentView: View {
         
         // Find the newly created collection to get its ID
         if let newCollection = persistence.savedCollections.last {
-            let newActivity = ActivityItem(
+            let newActivity = MediaCollection(
                 id: newCollection.id,
                 title: cleanName,
                 imageName: asset.mediaType == .video ? "video.circle" : "photo.circle",
@@ -404,7 +404,7 @@ struct ContentView: View {
                 // Find the newly created collection to get its ID
                 if let newCollection = persistence.savedCollections.last {
                     // Create ActivityItem with the SAME ID as the saved collection
-                    let newActivity = ActivityItem(
+                    let newActivity = MediaCollection(
                         id: newCollection.id,  // ← Use saved collection's ID
                         title: finalName,
                         imageName: "rectangle.stack",
@@ -427,7 +427,7 @@ struct ContentView: View {
         }
     }
 
-    private func deleteCustomVideo(_ activity: ActivityItem) {
+    private func deleteCustomVideo(_ activity: MediaCollection) {
         activityItemCollection.removeAll { $0.id == activity.id }
         
         if let matchingCollection = findMatchingSavedCollection(for: activity) {
@@ -438,7 +438,7 @@ struct ContentView: View {
         showToast = true
     }
     
-    private func renameCollection(_ activity: ActivityItem, newName: String) {
+    private func renameCollection(_ activity: MediaCollection, newName: String) {
         let cleanName = newName.trimmingCharacters(in: .whitespacesAndNewlines)
         
         if let matchingCollection = findMatchingSavedCollection(for: activity) {
@@ -447,10 +447,10 @@ struct ContentView: View {
             
             // UPDATE: Preserve ID and all other properties when updating local ActivityItem
             if let index = activityItemCollection.firstIndex(where: { $0.id == activity.id }) {
-                let updatedActivity: ActivityItem
+                let updatedActivity: MediaCollection
                 
                 if let videoAssets = activity.videoAssets, let photoAssets = activity.photoAssets {
-                    updatedActivity = ActivityItem(
+                    updatedActivity = MediaCollection(
                         id: activity.id,  // ← PRESERVE the original ID
                         title: cleanName,
                         imageName: activity.imageName,
@@ -461,7 +461,7 @@ struct ContentView: View {
                         backgroundColor: activity.backgroundColor
                     )
                 } else if let videoAssets = activity.videoAssets {
-                    updatedActivity = ActivityItem(
+                    updatedActivity = MediaCollection(
                         id: activity.id,  // ← PRESERVE the original ID  
                         title: cleanName,
                         imageName: activity.imageName,
@@ -472,7 +472,7 @@ struct ContentView: View {
                         backgroundColor: activity.backgroundColor
                     )
                 } else if let photoAssets = activity.photoAssets {
-                    updatedActivity = ActivityItem(
+                    updatedActivity = MediaCollection(
                         id: activity.id,  // ← PRESERVE the original ID
                         title: cleanName,
                         imageName: activity.imageName,
@@ -483,7 +483,7 @@ struct ContentView: View {
                         backgroundColor: activity.backgroundColor
                     )
                 } else if let videoAsset = activity.videoAsset {
-                    updatedActivity = ActivityItem(
+                    updatedActivity = MediaCollection(
                         id: activity.id,  // ← PRESERVE the original ID
                         title: cleanName,
                         imageName: activity.imageName,
@@ -492,7 +492,7 @@ struct ContentView: View {
                         backgroundColor: activity.backgroundColor
                     )
                 } else if let photoAsset = activity.photoAsset {
-                    updatedActivity = ActivityItem(
+                    updatedActivity = MediaCollection(
                         id: activity.id,  // ← PRESERVE the original ID
                         title: cleanName,
                         imageName: activity.imageName,
@@ -503,7 +503,7 @@ struct ContentView: View {
                 } else {
                     // For local video files, we need to add a UUID-preserving initializer for this case
                     // For now, use the general initializer with nil values
-                    updatedActivity = ActivityItem(
+                    updatedActivity = MediaCollection(
                         id: activity.id,  // ← PRESERVE the original ID
                         title: cleanName,
                         imageName: activity.imageName,
@@ -531,7 +531,7 @@ struct ContentView: View {
         renameText = ""
     }
 
-    private func assetIdentifiers(for activity: ActivityItem) -> [String] {
+    private func assetIdentifiers(for activity: MediaCollection) -> [String] {
         var ids: [String] = []
         if let videoAssets = activity.videoAssets {
             ids.append(contentsOf: videoAssets.map { $0.localIdentifier })
@@ -548,7 +548,7 @@ struct ContentView: View {
         return ids
     }
     
-    private func findMatchingSavedCollection(for activity: ActivityItem) -> SavedVideoCollection? {
+    private func findMatchingSavedCollection(for activity: MediaCollection) -> SavedVideoCollection? {
         let activityIDs = Set(assetIdentifiers(for: activity))
         guard !activityIDs.isEmpty else { return nil }
         
