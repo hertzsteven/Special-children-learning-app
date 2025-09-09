@@ -282,7 +282,7 @@ struct ContentView: View {
                     selectedMediaCollection = nil
                 }
             } else if mediaCollection.isPhotoCollection {
-                PhotoCollectionView(activity: mediaCollection) {
+                PhotoCollectionView(mediaCollection: mediaCollection) {
                     showingVideo = false
                     selectedMediaCollection = nil
                 }
@@ -292,12 +292,12 @@ struct ContentView: View {
                     selectedMediaCollection = nil
                 }
             } else if mediaCollection.isPhoto {
-                PhotoViewerView(activity: mediaCollection) {
+                PhotoViewerView(mediaCollection: mediaCollection) {
                     showingVideo = false
                     selectedMediaCollection = nil
                 }
             } else {
-                VideoPlayerView(activity: mediaCollection) {
+                VideoPlayerView(mediaCollection: mediaCollection) {
                     showingVideo = false
                     selectedMediaCollection = nil
                 }

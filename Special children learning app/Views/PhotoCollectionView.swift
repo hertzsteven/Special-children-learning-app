@@ -9,7 +9,7 @@ import SwiftUI
 import Photos
 
 struct PhotoCollectionView: View {
-    let activity: MediaCollection
+    let mediaCollection: MediaCollection
     let onDismiss: () -> Void
     
     @State private var currentIndex = 0
@@ -24,13 +24,13 @@ struct PhotoCollectionView: View {
     @State private var rippleOpacity: Double = 0.0
     
     private var photoAssets: [PHAsset] {
-        return activity.photoAssets ?? []
+        return mediaCollection.photoAssets ?? []
     }
     
     // NEW: Get current photo's associated media item
     private var currentMediaItem: SavedMediaItem? {
         guard currentIndex < photoAssets.count,
-              let mediaItems = activity.mediaItems else { return nil }
+              let mediaItems = mediaCollection.mediaItems else { return nil }
         
         let currentAsset = photoAssets[currentIndex]
         return mediaItems.first { $0.assetIdentifier == currentAsset.localIdentifier }
@@ -44,7 +44,7 @@ struct PhotoCollectionView: View {
         // Fallback to activity-level name lookup
         guard currentIndex < photoAssets.count else { return nil }
         let currentAsset = photoAssets[currentIndex]
-        return activity.getMediaItemName(for: currentAsset)
+        return mediaCollection.getMediaItemName(for: currentAsset)
     }
     
     var body: some View {

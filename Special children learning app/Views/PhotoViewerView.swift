@@ -9,7 +9,7 @@ import SwiftUI
 import Photos
 
 struct PhotoViewerView: View {
-    let activity: MediaCollection
+    let mediaCollection: MediaCollection
     let onDismiss: () -> Void
     
     @State private var displayImage: UIImage?
@@ -78,13 +78,13 @@ struct PhotoViewerView: View {
                 
                 // Title and description
                 VStack(spacing: 12) {
-                    Text(activity.title)
+                    Text(mediaCollection.title)
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
                     
-                    Text(activity.audioDescription)
+                    Text(mediaCollection.audioDescription)
                         .font(.body)
                         .foregroundColor(.white.opacity(0.9))
                         .multilineTextAlignment(.center)
@@ -104,7 +104,7 @@ struct PhotoViewerView: View {
     }
     
     private func loadPhoto() {
-        guard let photoAsset = activity.photoAsset else {
+        guard let photoAsset = mediaCollection.photoAsset else {
             isLoading = false
             return
         }
@@ -138,7 +138,7 @@ struct PhotoViewerView: View {
 
 #Preview {
     PhotoViewerView(
-        activity: MediaCollection(
+        mediaCollection: MediaCollection(
             title: "Sample Photo",
             imageName: "photo",
             videoFileName: "",

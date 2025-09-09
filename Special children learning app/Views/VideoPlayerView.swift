@@ -11,7 +11,7 @@ import AVFoundation
 import Photos
 
 struct VideoPlayerView: View {
-    let activity: MediaCollection
+    let mediaCollection: MediaCollection
     let onDismiss: () -> Void
 
     @State private var player: AVPlayer?
@@ -113,7 +113,7 @@ struct VideoPlayerView: View {
                     Spacer()
 
                     if hasStartedPlaying {
-                        Text(activity.title)
+                        Text(mediaCollection.title)
                             .font(.title)
                             .fontWeight(.bold)
                             .foregroundColor(.white)
@@ -145,9 +145,9 @@ struct VideoPlayerView: View {
 
     private func setupPlayer() {
         // Check if we have a PHAsset video or bundle video
-        if let videoAsset = activity.videoAsset {
+        if let videoAsset = mediaCollection.videoAsset {
             setupPHAssetPlayer(videoAsset)
-        } else if let videoFileName = activity.videoFileName {
+        } else if let videoFileName = mediaCollection.videoFileName {
             setupBundlePlayer(videoFileName)
         }
     }
@@ -346,7 +346,7 @@ struct TileRevealMask: Shape {
 }
 
 #Preview {
-    VideoPlayerView(activity: MediaCollection.sampleActivities[0]) {
+    VideoPlayerView(mediaCollection: MediaCollection.sampleActivities[0]) {
         print("Dismiss video")
     }
 }
