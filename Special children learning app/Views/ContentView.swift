@@ -51,8 +51,26 @@ struct ContentView: View {
                     .ignoresSafeArea()
                 
                 VStack(spacing: 30) {
+                    Button(action: {
+                        showingVideoSelection = true
+                    }) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.system(size: 20))
+                                .foregroundColor(.white)
+                            Text("Add an Album")
+                                .font(.system(size: 18, weight: .medium))
+                                .foregroundColor(.white)
+                        }
+                        .padding(.horizontal, 28)
+                        .padding(.vertical, 16)
+                        .background(Color(red: 0.4, green: 0.6, blue: 0.8)) // Soft blue
+                        .cornerRadius(12)
+                    }
+                    
                     // App Title and Settings
                     VStack(spacing: 8) {
+
                         HStack {
                             VStack(alignment: .leading, spacing: 8) {
 //                                Text("Learning Together")
@@ -64,28 +82,36 @@ struct ContentView: View {
 //                                    .font(.title3)
 //                                    .foregroundColor(.secondary)
                                 
-                                Button(action: {
-                                    showingVideoSelection = true
-                                }) {
-                                    Image(systemName: "plus.circle.fill")
-                                        .font(.largeTitle)
-                                        .foregroundColor(.blue)
-                                        .background(
-                                            Circle()
-                                                .fill(Color.white)
-                                                .frame(width: 48, height: 48)
-                                        )
-                                        .shadow(color: .blue.opacity(0.3), radius: 2, x: 0, y: 1)
-                                }
-                                .padding(.vertical, 32)
+//                                Button(action: {
+//                                    showingVideoSelection = true
+//                                }) {
+//                                    Image(systemName: "plus.circle.fill")
+//                                        .font(.largeTitle)
+//                                        .foregroundColor(.blue)
+//                                        .background(
+//                                            Circle()
+//                                                .fill(Color.white)
+//                                                .frame(width: 48, height: 48)
+//                                        )
+//                                        .shadow(color: .blue.opacity(0.3), radius: 2, x: 0, y: 1)
+//                                }
+//                                .padding(.vertical, 32)
                             }
                             
-                            Spacer()
+//                            Spacer()
                         }
                     }
-                    .padding(.top, 50)
+//                    .padding(.top, 50)
                     .padding(.horizontal, 20)
                     .padding(.bottom, 20)
+                    
+                    HStack {
+                        Text("My Media Albums")
+                            .font(.largeTitle)
+                            .fontWeight(.semibold)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 20)
                     
                     // Activities Grid
                     ScrollView {

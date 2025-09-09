@@ -203,7 +203,7 @@ struct PhotoCollectionView: View {
         }
         .onChange(of: currentIndex) { _, newValue in
             // NEW: Play audio when photo changes (but not for the first photo which is handled above)
-            if newValue > 0 {
+            if newValue >= 0 {
                 playAudioForCurrentPhoto()
             }
         }

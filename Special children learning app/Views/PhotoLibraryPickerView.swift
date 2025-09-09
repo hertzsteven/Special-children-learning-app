@@ -21,7 +21,7 @@ struct PhotoLibraryPickerView: View {
     let onVideoSelected: (PHAsset) -> Void
     let onIndividualMediaSelected: ([SavedMediaItem], String) -> Void // Updated signature
     
-    @State private var mediaFilter: MediaFilter = .videos
+    @State private var mediaFilter: MediaFilter = .photos
     @State private var selectedAlbum: PhotoAlbum?
     @State private var searchText = ""
     @State private var mediaItems: [MediaItem] = []
@@ -107,9 +107,9 @@ struct PhotoLibraryPickerView: View {
                             .cornerRadius(10)
                             
                             Picker("Media Type", selection: $mediaFilter) {
-                                Text("Videos").tag(MediaFilter.videos)
                                 Text("Photos").tag(MediaFilter.photos)
-                                Text("All").tag(MediaFilter.all)
+                                Text("Videos").tag(MediaFilter.videos)
+//                                Text("All").tag(MediaFilter.all)
                             }
                             .pickerStyle(SegmentedPickerStyle())
                         }
