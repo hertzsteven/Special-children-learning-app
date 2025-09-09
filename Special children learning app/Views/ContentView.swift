@@ -55,14 +55,14 @@ struct ContentView: View {
                     VStack(spacing: 8) {
                         HStack {
                             VStack(alignment: .leading, spacing: 8) {
-                                Text("Learning Together")
-                                    .font(.largeTitle)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.primary)
+//                                Text("Learning Together")
+//                                    .font(.largeTitle)
+//                                    .fontWeight(.bold)
+//                                    .foregroundColor(.primary)
                                 
-                                Text("Tap an activity to see and learn")
-                                    .font(.title3)
-                                    .foregroundColor(.secondary)
+//                                Text("Tap an activity to see and learn")
+//                                    .font(.title3)
+//                                    .foregroundColor(.secondary)
                                 
                                 Button(action: {
                                     showingVideoSelection = true
@@ -81,50 +81,11 @@ struct ContentView: View {
                             }
                             
                             Spacer()
-                            
-//                            Button(action: {
-//                                showingVideoSelection = true
-//                            }) {
-//                                Image(systemName: "plus.circle.fill")
-//                                    .font(.title2)
-//                                    .foregroundColor(.blue)
-//                                    .background(
-//                                        Circle()
-//                                            .fill(Color.white)
-//                                            .frame(width: 32, height: 32)
-//                                    )
-//                                    .shadow(color: .blue.opacity(0.3), radius: 2, x: 0, y: 1)
-//                            }
-//                            .padding(.horizontal, 10)
-//                            Button(action: {
-//                                showingSettings = true
-//                            }) {
-//                                Image(systemName: "gearshape.fill")
-//                                    .font(.title2)
-//                                    .foregroundColor(.secondary)
-//                            }
-
                         }
                     }
                     .padding(.top, 50)
                     .padding(.horizontal, 20)
                     .padding(.bottom, 20)
-                    
-//                    // Add Video Button
-//                    Button(action: {
-//                        showingVideoSelection = true
-//                    }) {
-//                        HStack {
-//                            Image(systemName: "plus.circle.fill")
-//                                .font(.title2)
-//                            Text("Add Video from Library")
-//                                .font(.headline)
-//                        }
-//                        .foregroundColor(.white)
-//                        .padding()
-//                        .background(Color.blue)
-//                        .cornerRadius(12)
-//                    }
                     
                     // Activities Grid
                     ScrollView {
@@ -145,6 +106,23 @@ struct ContentView: View {
                 // NEW: Collection Selection Overlay
                 collectionSelectionOverlay
             }
+//            .navigationTitle("Learning Together")
+            .navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    VStack(spacing: 4) {
+                        Text("Learning - Together")
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                            .foregroundColor(.primary)
+                        
+                        Text("Tap an activity to see and learn")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+            
             .navigationDestination(for: ActivityItem.self) { activity in
                 let _ = print(activity.title, activity.id)
                 let _ = print("-----")

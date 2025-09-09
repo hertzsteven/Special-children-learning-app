@@ -82,6 +82,12 @@ struct PhotoCollectionView: View {
                     .animation(.easeInOut(duration: 0.28), value: currentIndex)
                     .scaleEffect(isBouncing ? 1.05 : 1.0)
                     .animation(.spring(response: 0.22, dampingFraction: 0.6), value: isBouncing)
+                    .onAppear {
+                        // Play audio for first photo only when it appears
+                        if currentIndex == 0 {
+                            playAudioForCurrentPhoto()
+                        }
+                    }
                 
                 if showRipple {
                     GeometryReader { geo in
@@ -143,13 +149,21 @@ struct PhotoCollectionView: View {
                 VStack {
                     HStack {
                         Spacer()
-                        Button(action: onDismiss) {
+                        
+                        ZStack {
                             Image(systemName: "xmark.circle.fill")
                                 .font(.largeTitle)
                                 .foregroundColor(.white)
                                 .background(Color.black.opacity(0.5))
                                 .clipShape(Circle())
                         }
+                        .onLongPressGesture {
+                            onDismiss()
+                        }
+                        .onTapGesture {
+                            // Do nothing to prevent any tap action
+                        }
+
                         .padding()
                     }
                     Spacer()
@@ -179,18 +193,19 @@ struct PhotoCollectionView: View {
         .onAppear {
             loadPhotos()
             soundPlayer.playWhoosh(volume: 0.3, rate: 1.2)
-            // NEW: Play audio for first photo
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                playAudioForCurrentPhoto()
-            }
+            // DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            //     playAudioForCurrentPhoto()
+            // }
         }
         .onDisappear {
             // NEW: Cleanup audio when view disappears
             audioManager.cleanup()
         }
-        .onChange(of: currentIndex) { _, _ in
-            // NEW: Play audio when photo changes
-            playAudioForCurrentPhoto()
+        .onChange(of: currentIndex) { _, newValue in
+            // NEW: Play audio when photo changes (but not for the first photo which is handled above)
+            if newValue > 0 {
+                playAudioForCurrentPhoto()
+            }
         }
         .onTapGesture {
             // Simple tap to go to next photo

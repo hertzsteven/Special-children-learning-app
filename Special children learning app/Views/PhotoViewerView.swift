@@ -25,13 +25,29 @@ struct PhotoViewerView: View {
                 // Close button
                 HStack {
                     Spacer()
-                    Button(action: onDismiss) {
+                    ZStack {
                         Image(systemName: "xmark.circle.fill")
-                            .font(.title)
+                            .font(.largeTitle)
                             .foregroundColor(.white)
                             .background(Color.black.opacity(0.5))
                             .clipShape(Circle())
                     }
+                    .onLongPressGesture {
+                        onDismiss()
+                    }
+                    .onTapGesture {
+                        // Do nothing to prevent any tap action
+                    }
+//                    Button(action: {}) {
+//                        Image(systemName: "xmark.circle")
+//                            .font(.title)
+//                            .foregroundColor(.white)
+//                            .background(Color.black.opacity(0.5))
+//                            .clipShape(Circle())
+//                    }
+//                    .onLongPressGesture {
+//                        onDismiss()
+//                    }
                     .padding()
                 }
                 
