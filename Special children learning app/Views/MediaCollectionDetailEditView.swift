@@ -15,7 +15,7 @@
 import SwiftUI
 import Photos
 
-struct CollectionEditView: View {
+struct MediaCollectionDetailEditView: View {
     let mediaCollectionItem: MediaCollection
     let onCollectionUpdated: (MediaCollection) -> Void
     
@@ -417,7 +417,7 @@ extension MediaCollection {
 
 #Preview {
     NavigationView {
-        CollectionEditView(
+        MediaCollectionDetailEditView(
             mediaCollection: MediaCollection.sampleActivities.first(where: { $0.isVideoCollection })!,
             onCollectionUpdated: { _ in }
         )

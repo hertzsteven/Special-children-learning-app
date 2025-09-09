@@ -126,7 +126,7 @@ struct ContentView: View {
             .navigationDestination(for: MediaCollection.self) { mediaCollection in
                 let _ = print(mediaCollection.title, mediaCollection.id)
                 let _ = print("-----")
-                CollectionEditView(
+                MediaCollectionDetailEditView(
                     mediaCollection: mediaCollection,
                     onCollectionUpdated: { updatedmediaCollection in
                         // Update the mediaCollection in mediaCollectionItemCollection array
@@ -308,7 +308,7 @@ struct ContentView: View {
     @ViewBuilder
     private var collectionSelectionOverlay: some View {
         if showingCollectionSelection, let mediaCollection = selectedMediaCollectionForSelection {
-            CollectionItemSelectionView(
+            MediaCollectionItemsSelectionView(
                 activity: mediaCollection,
                 onDismiss: {
                     showingCollectionSelection = false

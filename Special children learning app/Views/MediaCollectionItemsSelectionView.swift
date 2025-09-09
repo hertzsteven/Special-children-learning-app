@@ -8,7 +8,7 @@
 import SwiftUI
 import Photos
 
-struct CollectionItemSelectionView: View {
+struct MediaCollectionItemsSelectionView: View {
     let activity: MediaCollection
     let onDismiss: () -> Void
     let onSelectionComplete: (MediaCollection) -> Void
@@ -398,7 +398,7 @@ struct MediaItemRow: View {
 }
 
 #Preview {
-    CollectionItemSelectionView(
+    MediaCollectionItemsSelectionView(
         activity: MediaCollection(
             title: "Sample Collection",
             imageName: "photo.stack",
