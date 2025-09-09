@@ -32,12 +32,12 @@ struct CollectionEditView: View {
     @State private var showingAddMediaNaming = false
     @State private var pendingNewAssets: [PHAsset] = []
     
-    init(activity: MediaCollection, onCollectionUpdated: @escaping (MediaCollection) -> Void) {
-        self.activityItem = activity
+    init(mediaCollection: MediaCollection, onCollectionUpdated: @escaping (MediaCollection) -> Void) {
+        self.activityItem = mediaCollection
         self.onCollectionUpdated = onCollectionUpdated
-        self._mediaItems = State(initialValue: activity.mediaItems ?? [])
-        self._newCollectionName = State(initialValue: activity.title)
-        self._currentTitle = State(initialValue: activity.title)
+        self._mediaItems = State(initialValue: mediaCollection.mediaItems ?? [])
+        self._newCollectionName = State(initialValue: mediaCollection.title)
+        self._currentTitle = State(initialValue: mediaCollection.title)
     }
     
     var body: some View {
@@ -418,7 +418,7 @@ extension MediaCollection {
 #Preview {
     NavigationView {
         CollectionEditView(
-            activity: MediaCollection.sampleActivities.first(where: { $0.isVideoCollection })!,
+            mediaCollection: MediaCollection.sampleActivities.first(where: { $0.isVideoCollection })!,
             onCollectionUpdated: { _ in }
         )
     }

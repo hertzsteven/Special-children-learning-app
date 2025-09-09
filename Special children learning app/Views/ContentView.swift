@@ -9,7 +9,7 @@ import SwiftUI
 import Photos
 
 struct ContentView: View {
-    @State private var selectedActivity: MediaCollection?
+    @State private var selectedMediaCollection: MediaCollection?
     @State private var showingVideo = false
     @State private var showingVideoSelection = false
     @State private var showingSettings = false
@@ -25,8 +25,8 @@ struct ContentView: View {
     @State private var renameText = ""
     @State private var mediaCollectionToRename: MediaCollection?
     @State private var showingCollectionSelection = false
-    @State private var selectedActivityForSelection: MediaCollection?
-    @State private var filteredActivityForViewing: MediaCollection?
+    @State private var selectedMediaCollectionForSelection: MediaCollection?
+    @State private var filteredMediaCollectionForViewing: MediaCollection?
     @State private var showingDeleteConfirm = false
     @State private var mediaCollectionToDelete: MediaCollection?
     @State private var navPath = NavigationPath()
@@ -39,7 +39,7 @@ struct ContentView: View {
     ]
     
     // Combine sample activities with custom videos
-    var allActivities: [MediaCollection] {
+    var mediaCollections: [MediaCollection] {
         MediaCollection.sampleActivities + mediaCollectionItemCollection
     }
     
@@ -90,8 +90,8 @@ struct ContentView: View {
                     // Activities Grid
                     ScrollView {
                         LazyVGrid(columns: columns, spacing: 24) {
-                            ForEach(allActivities) { activity in
-                                mediaCollectionCard(for: activity)
+                            ForEach(mediaCollections) { mediaCollection in
+                                mediaCollectionCard(for: mediaCollection)
                             }
                         }
                         .padding(.horizontal, 20)
@@ -127,14 +127,14 @@ struct ContentView: View {
                 let _ = print(mediaCollection.title, mediaCollection.id)
                 let _ = print("-----")
                 CollectionEditView(
-                    activity: mediaCollection,
-                    onCollectionUpdated: { updatedActivity in
+                    mediaCollection: mediaCollection,
+                    onCollectionUpdated: { updatedmediaCollection in
                         // Update the mediaCollection in mediaCollectionItemCollection array
                         if let index = mediaCollectionItemCollection.firstIndex(where: { $0.id == mediaCollection.id }) {
                             mediaCollectionItemCollection.remove(at: index)
-                            mediaCollectionItemCollection.insert(updatedActivity, at: index)
+                            mediaCollectionItemCollection.insert(updatedmediaCollection, at: index)
 //                            mediaCollectionItemCollection[index] = updatedActivity
-                            print("✅ Updated ActivityItem '\(updatedActivity.title)' in ContentView")
+                            print("✅ Updated ActivityItem '\(updatedmediaCollection.title)' in ContentView")
                         } else {
                             print("⚠️ Could not find ActivityItem to update in ContentView")
                         }
@@ -240,11 +240,11 @@ struct ContentView: View {
     private func mediaCollectionCard(for mediaCollection: MediaCollection) -> some View {
         let editHandler: (() -> Void)? = isCustom(mediaCollection) ? { navPath.append(mediaCollection) } : nil
         
-        ActivityCardView(
+        mediaCollectionCardView(
             mediaCollection: mediaCollection,
             onTap: {
 //                if mediaCollection.isVideoCollection || mediaCollection.isPhotoCollection || mediaCollection.isMixedMediaCollection {
-                    selectedActivityForSelection = mediaCollection
+                    selectedMediaCollectionForSelection = mediaCollection
                     showingCollectionSelection = true
 //                } else {
 //                    selectedActivity = mediaCollection
@@ -275,31 +275,31 @@ struct ContentView: View {
 
     @ViewBuilder
     private var videoOverlay: some View {
-        if showingVideo, let mediaCollection = selectedActivity {
+        if showingVideo, let mediaCollection = selectedMediaCollection {
             if mediaCollection.isVideoCollection {
                 MediaCollectionPlayerView(activity: mediaCollection) {
                     showingVideo = false
-                    selectedActivity = nil
+                    selectedMediaCollection = nil
                 }
             } else if mediaCollection.isPhotoCollection {
                 PhotoCollectionView(activity: mediaCollection) {
                     showingVideo = false
-                    selectedActivity = nil
+                    selectedMediaCollection = nil
                 }
             } else if mediaCollection.isMixedMediaCollection {
                 MediaCollectionPlayerView(activity: mediaCollection) {
                     showingVideo = false
-                    selectedActivity = nil
+                    selectedMediaCollection = nil
                 }
             } else if mediaCollection.isPhoto {
                 PhotoViewerView(activity: mediaCollection) {
                     showingVideo = false
-                    selectedActivity = nil
+                    selectedMediaCollection = nil
                 }
             } else {
                 VideoPlayerView(activity: mediaCollection) {
                     showingVideo = false
-                    selectedActivity = nil
+                    selectedMediaCollection = nil
                 }
             }
         }
@@ -307,17 +307,17 @@ struct ContentView: View {
 
     @ViewBuilder
     private var collectionSelectionOverlay: some View {
-        if showingCollectionSelection, let mediaCollection = selectedActivityForSelection {
+        if showingCollectionSelection, let mediaCollection = selectedMediaCollectionForSelection {
             CollectionItemSelectionView(
                 activity: mediaCollection,
                 onDismiss: {
                     showingCollectionSelection = false
-                    selectedActivityForSelection = nil
+                    selectedMediaCollectionForSelection = nil
                 },
                 onSelectionComplete: { filteredActivity in
                     showingCollectionSelection = false
-                    selectedActivityForSelection = nil
-                    selectedActivity = filteredActivity
+                    selectedMediaCollectionForSelection = nil
+                    selectedMediaCollection = filteredActivity
                     showingVideo = true
                 }
             )
