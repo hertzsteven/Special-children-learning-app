@@ -192,7 +192,7 @@ struct CollectionEditView: View {
         }
         // NEW: Media selection for adding to existing collection
         .fullScreenCover(isPresented: $showingAddMediaSelection) {
-            FullScreenMediaSelectionView(
+            PhotoLibraryPickerView(
                 onVideoSelected: { selectedAsset in
                     // Handle single asset selection - convert to array and proceed to naming
                     pendingNewAssets = [selectedAsset]

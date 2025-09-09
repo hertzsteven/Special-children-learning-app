@@ -15,7 +15,7 @@ enum MediaFilter: Hashable {
     case all
 }
 
-struct FullScreenMediaSelectionView: View {
+struct PhotoLibraryPickerView: View {
     @StateObject private var photoLibraryManager = PhotoLibraryManager()
     @Environment(\.dismiss) private var dismiss
     let onVideoSelected: (PHAsset) -> Void
@@ -625,7 +625,7 @@ struct FullScreenMediaThumbnailView: View {
 }
 
 #Preview {
-    FullScreenMediaSelectionView(
+    PhotoLibraryPickerView(
         onVideoSelected: { asset in
             print("Selected single media: \(asset.localIdentifier)")
         },

@@ -156,7 +156,7 @@ struct ContentView: View {
 
         .preferredColorScheme(.light) // Always use light mode for consistency
         .fullScreenCover(isPresented: $showingVideoSelection) {
-            FullScreenMediaSelectionView(
+            PhotoLibraryPickerView(
                 onVideoSelected: { selectedAsset in
                     // Handle single photos and videos
                     if selectedAsset.mediaType == .video {

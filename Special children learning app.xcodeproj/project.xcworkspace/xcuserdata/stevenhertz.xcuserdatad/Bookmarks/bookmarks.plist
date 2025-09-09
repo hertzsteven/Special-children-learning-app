@@ -90,7 +90,7 @@
 				<key>trailing</key>
 				<string>        // NEW: Media selection for adding to existing collection
         .fullScreenCover(isPresented: $showingAddMediaSelection) {
-            FullScreenMediaSelectionView(
+            PhotoLibraryPickerView(
 </string>
 			</dict>
 			<key>title</key>
