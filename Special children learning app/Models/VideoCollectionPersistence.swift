@@ -249,7 +249,7 @@ class VideoCollectionPersistence: ObservableObject {
     
     // instead of collapsing to single videoAsset/photoAsset when count == 1.
     func convertToActivityItems() async -> [MediaCollection] {
-        var activityItems: [MediaCollection] = []
+        var mediaCollectionItems: [MediaCollection] = []
         
         for collection in savedCollections {
             let identifiersToFetch = collection.allAssetIdentifiers
@@ -258,7 +258,7 @@ class VideoCollectionPersistence: ObservableObject {
                 let videoAssets = validAssets.filter { $0.mediaType == .video }
                 let photoAssets = validAssets.filter { $0.mediaType == .image }
                 
-                let activityItem = MediaCollection(
+                let mediaCollectionItem = MediaCollection(
                     id: collection.id,
                     title: collection.title,
                     imageName: collection.imageName,
@@ -269,13 +269,13 @@ class VideoCollectionPersistence: ObservableObject {
                     backgroundColor: collection.backgroundColor
                 )
                 
-                activityItems.append(activityItem)
+                mediaCollectionItems.append(mediaCollectionItem)
             } else {
                 print("⚠️ Collection '\(collection.title)' has no valid media")
             }
         }
         
-        return activityItems
+        return mediaCollectionItems
     }
     
     private func getValidAssets(from identifiers: [String]) async -> [PHAsset]? {

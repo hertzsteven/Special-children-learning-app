@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ActivityCardView: View {
-    let activity: MediaCollection
+    let mediaCollection: MediaCollection
     let onTap: () -> Void
     let onEdit: (() -> Void)? // NEW: Optional edit callback
     
@@ -23,35 +23,35 @@ struct ActivityCardView: View {
                 VStack(spacing: 12) {
                     // Activity Illustration
                     RoundedRectangle(cornerRadius: 16)
-                        .fill(Color(activity.backgroundColor))
+                        .fill(Color(mediaCollection.backgroundColor))
                         .frame(height: 120)
                         .overlay {
-                            Image(systemName: activity.imageName)
+                            Image(systemName: mediaCollection.imageName)
                                 .font(.system(size: 48))
                                 .foregroundColor(.primary.opacity(0.8))
                         }
                     
                     // Activity Title and Info
                     VStack(spacing: 4) {
-                        Text(activity.title)
+                        Text(mediaCollection.title)
                             .font(.title2)
                             .fontWeight(.medium)
                             .foregroundColor(.primary)
                             .multilineTextAlignment(.center)
                         
                         // Show a single line of info: prefer mixed → video → photo
-                        if activity.isMixedMediaCollection {
-                            let videoCount = activity.videoAssets?.count ?? 0
-                            let photoCount = activity.photoAssets?.count ?? 0
+                        if mediaCollection.isMixedMediaCollection {
+                            let videoCount = mediaCollection.videoAssets?.count ?? 0
+                            let photoCount = mediaCollection.photoAssets?.count ?? 0
                             let total = videoCount + photoCount
                             Text("\(total) \(total == 1 ? "item" : "items")")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
-                        } else if let count = activity.videoAssets?.count, count > 0 {
+                        } else if let count = mediaCollection.videoAssets?.count, count > 0 {
                             Text("\(count) \(count == 1 ? "video" : "videos")")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
-                        } else if let count = activity.photoAssets?.count, count > 0 {
+                        } else if let count = mediaCollection.photoAssets?.count, count > 0 {
                             Text("\(count) \(count == 1 ? "photo" : "photos")")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
@@ -63,7 +63,7 @@ struct ActivityCardView: View {
             
             // NEW: Edit button for collections
             if let onEdit = onEdit {
-//               (activity.isVideoCollection || activity.isPhotoCollection || activity.isMixedMediaCollection) {
+//               (mediaCollection.isVideoCollection || mediaCollection.isPhotoCollection || mediaCollection.isMixedMediaCollection) {
                 Button(action: {
                     let impactFeedback = UIImpactFeedbackGenerator(style: .light)
                     impactFeedback.impactOccurred()
@@ -84,32 +84,32 @@ struct ActivityCardView: View {
     }
     
     private var accessibilityLabel: String {
-        if activity.isMixedMediaCollection {
-            let total = (activity.videoAssets?.count ?? 0) + (activity.photoAssets?.count ?? 0)
-            return "\(activity.title). Collection with \(total) \(total == 1 ? "item" : "items")."
-        } else if let count = activity.videoAssets?.count, count > 0 {
-            return "\(activity.title). Collection with \(count) \(count == 1 ? "video" : "videos")."
-        } else if let count = activity.photoAssets?.count, count > 0 {
-            return "\(activity.title). Collection with \(count) \(count == 1 ? "photo" : "photos")."
-        } else if activity.isPhoto {
-            return "\(activity.title). Photo."
-        } else if activity.isVideo {
-            return "\(activity.title). Video."
+        if mediaCollection.isMixedMediaCollection {
+            let total = (mediaCollection.videoAssets?.count ?? 0) + (mediaCollection.photoAssets?.count ?? 0)
+            return "\(mediaCollection.title). Collection with \(total) \(total == 1 ? "item" : "items")."
+        } else if let count = mediaCollection.videoAssets?.count, count > 0 {
+            return "\(mediaCollection.title). Collection with \(count) \(count == 1 ? "video" : "videos")."
+        } else if let count = mediaCollection.photoAssets?.count, count > 0 {
+            return "\(mediaCollection.title). Collection with \(count) \(count == 1 ? "photo" : "photos")."
+        } else if mediaCollection.isPhoto {
+            return "\(mediaCollection.title). Photo."
+        } else if mediaCollection.isVideo {
+            return "\(mediaCollection.title). Video."
         } else {
-            return activity.title
+            return mediaCollection.title
         }
     }
     
     private var accessibilityHint: String {
-        if activity.isMixedMediaCollection {
+        if mediaCollection.isMixedMediaCollection {
             return "Double tap to view collection"
-        } else if let count = activity.videoAssets?.count, count > 0 {
+        } else if let count = mediaCollection.videoAssets?.count, count > 0 {
             return "Double tap to play video collection"
-        } else if let count = activity.photoAssets?.count, count > 0 {
+        } else if let count = mediaCollection.photoAssets?.count, count > 0 {
             return "Double tap to view photo collection"
-        } else if activity.isPhoto {
+        } else if mediaCollection.isPhoto {
             return "Double tap to view photo"
-        } else if activity.isVideo {
+        } else if mediaCollection.isVideo {
             return "Double tap to play video"
         } else {
             return "Double tap to open"
@@ -130,7 +130,7 @@ struct CardButtonStyle: ButtonStyle {
 
 #Preview {
     ActivityCardView(
-        activity: MediaCollection.sampleActivities[0],
+        mediaCollection: MediaCollection.sampleActivities[0],
         onTap: {
             print("Card tapped")
         },

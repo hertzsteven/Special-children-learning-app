@@ -13,7 +13,7 @@ struct ContentView: View {
     @State private var showingVideo = false
     @State private var showingVideoSelection = false
     @State private var showingSettings = false
-    @State private var activityItemCollection: [MediaCollection] = []
+    @State private var mediaCollectionItemCollection: [MediaCollection] = []
     @State private var showToast = false
     @State private var toastMessage = ""
     @State private var showingSingleVideoNameDialog = false
@@ -23,12 +23,12 @@ struct ContentView: View {
     @State private var pendingCollectionAssets: [PHAsset] = []
     @State private var showingRenameDialog = false
     @State private var renameText = ""
-    @State private var activityToRename: MediaCollection?
+    @State private var mediaCollectionToRename: MediaCollection?
     @State private var showingCollectionSelection = false
     @State private var selectedActivityForSelection: MediaCollection?
     @State private var filteredActivityForViewing: MediaCollection?
     @State private var showingDeleteConfirm = false
-    @State private var activityToDelete: MediaCollection?
+    @State private var mediaCollectionToDelete: MediaCollection?
     @State private var navPath = NavigationPath()
     
     @StateObject private var persistence = VideoCollectionPersistence.shared
@@ -40,7 +40,7 @@ struct ContentView: View {
     
     // Combine sample activities with custom videos
     var allActivities: [MediaCollection] {
-        MediaCollection.sampleActivities + activityItemCollection
+        MediaCollection.sampleActivities + mediaCollectionItemCollection
     }
     
     var body: some View {
@@ -60,7 +60,7 @@ struct ContentView: View {
 //                                    .fontWeight(.bold)
 //                                    .foregroundColor(.primary)
                                 
-//                                Text("Tap an activity to see and learn")
+//                                Text("Tap an mediaCollection to see and learn")
 //                                    .font(.title3)
 //                                    .foregroundColor(.secondary)
                                 
@@ -91,7 +91,7 @@ struct ContentView: View {
                     ScrollView {
                         LazyVGrid(columns: columns, spacing: 24) {
                             ForEach(allActivities) { activity in
-                                activityCard(for: activity)
+                                mediaCollectionCard(for: activity)
                             }
                         }
                         .padding(.horizontal, 20)
@@ -116,24 +116,24 @@ struct ContentView: View {
                             .fontWeight(.bold)
                             .foregroundColor(.primary)
                         
-                        Text("Tap an activity to see and learn")
+                        Text("Tap an mediaCollection to see and learn")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
                 }
             }
             
-            .navigationDestination(for: MediaCollection.self) { activity in
-                let _ = print(activity.title, activity.id)
+            .navigationDestination(for: MediaCollection.self) { mediaCollection in
+                let _ = print(mediaCollection.title, mediaCollection.id)
                 let _ = print("-----")
                 CollectionEditView(
-                    activity: activity,
+                    activity: mediaCollection,
                     onCollectionUpdated: { updatedActivity in
-                        // Update the activity in activityItemCollection array
-                        if let index = activityItemCollection.firstIndex(where: { $0.id == activity.id }) {
-                            activityItemCollection.remove(at: index)
-                            activityItemCollection.insert(updatedActivity, at: index)
-//                            activityItemCollection[index] = updatedActivity
+                        // Update the mediaCollection in mediaCollectionItemCollection array
+                        if let index = mediaCollectionItemCollection.firstIndex(where: { $0.id == mediaCollection.id }) {
+                            mediaCollectionItemCollection.remove(at: index)
+                            mediaCollectionItemCollection.insert(updatedActivity, at: index)
+//                            mediaCollectionItemCollection[index] = updatedActivity
                             print("✅ Updated ActivityItem '\(updatedActivity.title)' in ContentView")
                         } else {
                             print("⚠️ Could not find ActivityItem to update in ContentView")
@@ -204,14 +204,14 @@ struct ContentView: View {
                 .textInputAutocapitalization(.words)
             
             Button("Save") {
-                if let activity = activityToRename {
-                    renameCollection(activity, newName: renameText)
+                if let mediaCollection = mediaCollectionToRename {
+                    renameCollection(mediaCollection, newName: renameText)
                 }
             }
             .disabled(renameText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             
             Button("Cancel", role: .cancel) {
-                activityToRename = nil
+                mediaCollectionToRename = nil
                 renameText = ""
             }
         } message: {
@@ -219,16 +219,16 @@ struct ContentView: View {
         }
         .alert("Delete Collection?", isPresented: $showingDeleteConfirm) {
             Button("Delete", role: .destructive) {
-                if let activity = activityToDelete {
-                    deleteCustomVideo(activity)
+                if let mediaCollection = mediaCollectionToDelete {
+                    deleteCustomVideo(mediaCollection)
                 }
-                activityToDelete = nil
+                mediaCollectionToDelete = nil
             }
             Button("Cancel", role: .cancel) {
-                activityToDelete = nil
+                mediaCollectionToDelete = nil
             }
         } message: {
-            Text("This will remove '\(activityToDelete?.title ?? "this collection")' from your app. Your photos and videos remain in the Photos library.")
+            Text("This will remove '\(mediaCollectionToDelete?.title ?? "this collection")' from your app. Your photos and videos remain in the Photos library.")
         }
         .toast(isShowing: $showToast, message: toastMessage)
         .task {
@@ -237,36 +237,36 @@ struct ContentView: View {
     }
 
     @ViewBuilder
-    private func activityCard(for activity: MediaCollection) -> some View {
-        let editHandler: (() -> Void)? = isCustom(activity) ? { navPath.append(activity) } : nil
+    private func mediaCollectionCard(for mediaCollection: MediaCollection) -> some View {
+        let editHandler: (() -> Void)? = isCustom(mediaCollection) ? { navPath.append(mediaCollection) } : nil
         
         ActivityCardView(
-            activity: activity,
+            mediaCollection: mediaCollection,
             onTap: {
-//                if activity.isVideoCollection || activity.isPhotoCollection || activity.isMixedMediaCollection {
-                    selectedActivityForSelection = activity
+//                if mediaCollection.isVideoCollection || mediaCollection.isPhotoCollection || mediaCollection.isMixedMediaCollection {
+                    selectedActivityForSelection = mediaCollection
                     showingCollectionSelection = true
 //                } else {
-//                    selectedActivity = activity
+//                    selectedActivity = mediaCollection
 //                    showingVideo = true
 //                }
             },
             onEdit: editHandler
         )
         .contextMenu {
-            if isCustom(activity) {
+            if isCustom(mediaCollection) {
                 Button("Edit Collection") {
-                    navPath.append(activity)
+                    navPath.append(mediaCollection)
                 }
                 
                 Button("Delete Collection", role: .destructive) {
-                    activityToDelete = activity
+                    mediaCollectionToDelete = mediaCollection
                     showingDeleteConfirm = true
                 }
                 
                 Button("Rename Collection") {
-                    activityToRename = activity
-                    renameText = activity.title
+                    mediaCollectionToRename = mediaCollection
+                    renameText = mediaCollection.title
                     showingRenameDialog = true
                 }
             }
@@ -275,29 +275,29 @@ struct ContentView: View {
 
     @ViewBuilder
     private var videoOverlay: some View {
-        if showingVideo, let activity = selectedActivity {
-            if activity.isVideoCollection {
-                MediaCollectionPlayerView(activity: activity) {
+        if showingVideo, let mediaCollection = selectedActivity {
+            if mediaCollection.isVideoCollection {
+                MediaCollectionPlayerView(activity: mediaCollection) {
                     showingVideo = false
                     selectedActivity = nil
                 }
-            } else if activity.isPhotoCollection {
-                PhotoCollectionView(activity: activity) {
+            } else if mediaCollection.isPhotoCollection {
+                PhotoCollectionView(activity: mediaCollection) {
                     showingVideo = false
                     selectedActivity = nil
                 }
-            } else if activity.isMixedMediaCollection {
-                MediaCollectionPlayerView(activity: activity) {
+            } else if mediaCollection.isMixedMediaCollection {
+                MediaCollectionPlayerView(activity: mediaCollection) {
                     showingVideo = false
                     selectedActivity = nil
                 }
-            } else if activity.isPhoto {
-                PhotoViewerView(activity: activity) {
+            } else if mediaCollection.isPhoto {
+                PhotoViewerView(activity: mediaCollection) {
                     showingVideo = false
                     selectedActivity = nil
                 }
             } else {
-                VideoPlayerView(activity: activity) {
+                VideoPlayerView(activity: mediaCollection) {
                     showingVideo = false
                     selectedActivity = nil
                 }
@@ -307,9 +307,9 @@ struct ContentView: View {
 
     @ViewBuilder
     private var collectionSelectionOverlay: some View {
-        if showingCollectionSelection, let activity = selectedActivityForSelection {
+        if showingCollectionSelection, let mediaCollection = selectedActivityForSelection {
             CollectionItemSelectionView(
-                activity: activity,
+                activity: mediaCollection,
                 onDismiss: {
                     showingCollectionSelection = false
                     selectedActivityForSelection = nil
@@ -324,13 +324,13 @@ struct ContentView: View {
         }
     }
 
-    private func isCustom(_ activity: MediaCollection) -> Bool {
-        activityItemCollection.contains(where: { $0.id == activity.id })
+    private func isCustom(_ mediaCollection: MediaCollection) -> Bool {
+        mediaCollectionItemCollection.contains(where: { $0.id == mediaCollection.id })
     }
 
     private func loadSavedCollections() async {
         let savedActivityItems = await persistence.convertToActivityItems()
-        activityItemCollection = savedActivityItems
+        mediaCollectionItemCollection = savedActivityItems
     }
     
     private func addSingleVideo(from asset: PHAsset, name: String) {
@@ -362,7 +362,7 @@ struct ContentView: View {
                 backgroundColor: asset.mediaType == .video ? "softBlue" : "sage"
             )
             
-            activityItemCollection.append(newActivity)
+            mediaCollectionItemCollection.append(newActivity)
         }
         
         // Show confirmation
@@ -415,7 +415,7 @@ struct ContentView: View {
                         backgroundColor: "warmBeige"
                     )
                     
-                    activityItemCollection.append(newActivity)
+                    mediaCollectionItemCollection.append(newActivity)
                 }
                 
                 // Show confirmation
@@ -427,10 +427,10 @@ struct ContentView: View {
         }
     }
 
-    private func deleteCustomVideo(_ activity: MediaCollection) {
-        activityItemCollection.removeAll { $0.id == activity.id }
+    private func deleteCustomVideo(_ mediaCollection: MediaCollection) {
+        mediaCollectionItemCollection.removeAll { $0.id == mediaCollection.id }
         
-        if let matchingCollection = findMatchingSavedCollection(for: activity) {
+        if let matchingCollection = findMatchingSavedCollection(for: mediaCollection) {
             persistence.deleteCollection(matchingCollection)
         }
         
@@ -438,84 +438,84 @@ struct ContentView: View {
         showToast = true
     }
     
-    private func renameCollection(_ activity: MediaCollection, newName: String) {
+    private func renameCollection(_ mediaCollection: MediaCollection, newName: String) {
         let cleanName = newName.trimmingCharacters(in: .whitespacesAndNewlines)
         
-        if let matchingCollection = findMatchingSavedCollection(for: activity) {
+        if let matchingCollection = findMatchingSavedCollection(for: mediaCollection) {
             // Update in persistence
             persistence.renameCollection(matchingCollection, newTitle: cleanName)
             
             // UPDATE: Preserve ID and all other properties when updating local ActivityItem
-            if let index = activityItemCollection.firstIndex(where: { $0.id == activity.id }) {
+            if let index = mediaCollectionItemCollection.firstIndex(where: { $0.id == mediaCollection.id }) {
                 let updatedActivity: MediaCollection
                 
-                if let videoAssets = activity.videoAssets, let photoAssets = activity.photoAssets {
+                if let videoAssets = mediaCollection.videoAssets, let photoAssets = mediaCollection.photoAssets {
                     updatedActivity = MediaCollection(
-                        id: activity.id,  // ← PRESERVE the original ID
+                        id: mediaCollection.id,  // ← PRESERVE the original ID
                         title: cleanName,
-                        imageName: activity.imageName,
+                        imageName: mediaCollection.imageName,
                         videoAssets: videoAssets,
                         photoAssets: photoAssets,
-                        mediaItems: activity.mediaItems,
-                        audioDescription: activity.audioDescription,
-                        backgroundColor: activity.backgroundColor
+                        mediaItems: mediaCollection.mediaItems,
+                        audioDescription: mediaCollection.audioDescription,
+                        backgroundColor: mediaCollection.backgroundColor
                     )
-                } else if let videoAssets = activity.videoAssets {
+                } else if let videoAssets = mediaCollection.videoAssets {
                     updatedActivity = MediaCollection(
-                        id: activity.id,  // ← PRESERVE the original ID  
+                        id: mediaCollection.id,  // ← PRESERVE the original ID  
                         title: cleanName,
-                        imageName: activity.imageName,
+                        imageName: mediaCollection.imageName,
                         videoAssets: videoAssets,
                         photoAssets: nil,
-                        mediaItems: activity.mediaItems,
-                        audioDescription: activity.audioDescription,
-                        backgroundColor: activity.backgroundColor
+                        mediaItems: mediaCollection.mediaItems,
+                        audioDescription: mediaCollection.audioDescription,
+                        backgroundColor: mediaCollection.backgroundColor
                     )
-                } else if let photoAssets = activity.photoAssets {
+                } else if let photoAssets = mediaCollection.photoAssets {
                     updatedActivity = MediaCollection(
-                        id: activity.id,  // ← PRESERVE the original ID
+                        id: mediaCollection.id,  // ← PRESERVE the original ID
                         title: cleanName,
-                        imageName: activity.imageName,
+                        imageName: mediaCollection.imageName,
                         videoAssets: nil,
                         photoAssets: photoAssets,
-                        mediaItems: activity.mediaItems,
-                        audioDescription: activity.audioDescription,
-                        backgroundColor: activity.backgroundColor
+                        mediaItems: mediaCollection.mediaItems,
+                        audioDescription: mediaCollection.audioDescription,
+                        backgroundColor: mediaCollection.backgroundColor
                     )
-                } else if let videoAsset = activity.videoAsset {
+                } else if let videoAsset = mediaCollection.videoAsset {
                     updatedActivity = MediaCollection(
-                        id: activity.id,  // ← PRESERVE the original ID
+                        id: mediaCollection.id,  // ← PRESERVE the original ID
                         title: cleanName,
-                        imageName: activity.imageName,
+                        imageName: mediaCollection.imageName,
                         videoAsset: videoAsset,
-                        audioDescription: activity.audioDescription,
-                        backgroundColor: activity.backgroundColor
+                        audioDescription: mediaCollection.audioDescription,
+                        backgroundColor: mediaCollection.backgroundColor
                     )
-                } else if let photoAsset = activity.photoAsset {
+                } else if let photoAsset = mediaCollection.photoAsset {
                     updatedActivity = MediaCollection(
-                        id: activity.id,  // ← PRESERVE the original ID
+                        id: mediaCollection.id,  // ← PRESERVE the original ID
                         title: cleanName,
-                        imageName: activity.imageName,
+                        imageName: mediaCollection.imageName,
                         photoAsset: photoAsset,
-                        audioDescription: activity.audioDescription,
-                        backgroundColor: activity.backgroundColor
+                        audioDescription: mediaCollection.audioDescription,
+                        backgroundColor: mediaCollection.backgroundColor
                     )
                 } else {
                     // For local video files, we need to add a UUID-preserving initializer for this case
                     // For now, use the general initializer with nil values
                     updatedActivity = MediaCollection(
-                        id: activity.id,  // ← PRESERVE the original ID
+                        id: mediaCollection.id,  // ← PRESERVE the original ID
                         title: cleanName,
-                        imageName: activity.imageName,
+                        imageName: mediaCollection.imageName,
                         videoAssets: nil,
                         photoAssets: nil,
                         mediaItems: nil,
-                        audioDescription: activity.audioDescription,
-                        backgroundColor: activity.backgroundColor
+                        audioDescription: mediaCollection.audioDescription,
+                        backgroundColor: mediaCollection.backgroundColor
                     )
                 }
                 
-                activityItemCollection[index] = updatedActivity
+                mediaCollectionItemCollection[index] = updatedActivity
                 print("✅ Updated ActivityItem '\(cleanName)' with preserved ID in ContentView")
             }
             
@@ -527,40 +527,40 @@ struct ContentView: View {
         showToast = true
         
         // Reset state
-        activityToRename = nil
+        mediaCollectionToRename = nil
         renameText = ""
     }
 
-    private func assetIdentifiers(for activity: MediaCollection) -> [String] {
+    private func assetIdentifiers(for mediaCollection: MediaCollection) -> [String] {
         var ids: [String] = []
-        if let videoAssets = activity.videoAssets {
+        if let videoAssets = mediaCollection.videoAssets {
             ids.append(contentsOf: videoAssets.map { $0.localIdentifier })
         }
-        if let photoAssets = activity.photoAssets {
+        if let photoAssets = mediaCollection.photoAssets {
             ids.append(contentsOf: photoAssets.map { $0.localIdentifier })
         }
-        if let videoAsset = activity.videoAsset {
+        if let videoAsset = mediaCollection.videoAsset {
             ids.append(videoAsset.localIdentifier)
         }
-        if let photoAsset = activity.photoAsset {
+        if let photoAsset = mediaCollection.photoAsset {
             ids.append(photoAsset.localIdentifier)
         }
         return ids
     }
     
-    private func findMatchingSavedCollection(for activity: MediaCollection) -> SavedVideoCollection? {
-        let activityIDs = Set(assetIdentifiers(for: activity))
-        guard !activityIDs.isEmpty else { return nil }
+    private func findMatchingSavedCollection(for mediaCollection: MediaCollection) -> SavedVideoCollection? {
+        let mediaCollectionIDs = Set(assetIdentifiers(for: mediaCollection))
+        guard !mediaCollectionIDs.isEmpty else { return nil }
         
         // Prefer exact asset set match
-        if let exactMatch = persistence.savedCollections.first(where: { Set($0.allAssetIdentifiers) == activityIDs }) {
+        if let exactMatch = persistence.savedCollections.first(where: { Set($0.allAssetIdentifiers) == mediaCollectionIDs }) {
             return exactMatch
         }
         
         // Fallback: match by title and overlapping assets count
         if let fallback = persistence.savedCollections.first(where: {
-            $0.title == activity.title && !$0.allAssetIdentifiers.isEmpty &&
-            Set($0.allAssetIdentifiers).intersection(activityIDs).count == activityIDs.count
+            $0.title == mediaCollection.title && !$0.allAssetIdentifiers.isEmpty &&
+            Set($0.allAssetIdentifiers).intersection(mediaCollectionIDs).count == mediaCollectionIDs.count
         }) {
             return fallback
         }
