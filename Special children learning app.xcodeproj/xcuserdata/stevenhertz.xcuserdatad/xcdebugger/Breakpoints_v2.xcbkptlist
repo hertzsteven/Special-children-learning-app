@@ -400,36 +400,6 @@
             endingLineNumber = "249"
             landmarkName = "body"
             landmarkType = "24">
-            <Locations>
-               <Location
-                  uuid = "ABDB31FA-656C-4286-BDB0-D33B651C0B38 - 377c2ee7ec59443"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "closure #3 @Swift.MainActor () -&gt; () in closure #2 () -&gt; SwiftUI.TupleView&lt;(&lt;&lt;opaque return type of SwiftUI.View.buttonStyle&lt;&#x3c4;_0_0 where &#x3c4;_1_0: SwiftUI.PrimitiveButtonStyle&gt;(&#x3c4;_1_0) -&gt; some&gt;&gt;.0, &lt;&lt;opaque return type of SwiftUI.View.buttonStyle&lt;&#x3c4;_0_0 where &#x3c4;_1_0: SwiftUI.PrimitiveButtonStyle&gt;(&#x3c4;_1_0) -&gt; some&gt;&gt;.0)&gt; in closure #1 () -&gt; SwiftUI.TupleView&lt;(&lt;&lt;opaque return type of SwiftUI.View.padding(SwiftUI.Edge.Set, Swift.Optional&lt;CoreGraphics.CGFloat&gt;) -&gt; some&gt;&gt;.0, &lt;&lt;opaque return type of SwiftUI.View.padding(SwiftUI.Edge.Set, Swift.Optional&lt;CoreGraphics.CGFloat&gt;) -&gt; some&gt;&gt;.0, SwiftUI.Spacer, &lt;&lt;opaque return type of SwiftUI.View.padding(SwiftUI.Edge.Set, Swift.Optional&lt;CoreGraphics.CGFloat&gt;) -&gt; some&gt;&gt;.0)&gt; in closure #2 () -&gt; &lt;&lt;opaque return type of SwiftUI.View.background&lt;&#x3c4;_0_0 where &#x3c4;_1_0: SwiftUI.ShapeStyle&gt;(_: &#x3c4;_1_0, ignoresSafeAreaEdges: SwiftUI.Edge.Set) -&gt; some&gt;&gt;.0 in Special_children_learning_app.ContentView.body.getter : some"
-                  moduleName = "Special children learning app.debug.dylib"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/stevenhertz/Documents/Special%20children%20learning%20app/Special%20children%20learning%20app/Views/ContentView.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "249"
-                  endingLineNumber = "249">
-               </Location>
-               <Location
-                  uuid = "ABDB31FA-656C-4286-BDB0-D33B651C0B38 - 3d0c04a11d8b18b9"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "closure #2 () -&gt; &lt;&lt;opaque return type of SwiftUI.View.overlay&lt;&#x3c4;_0_0 where &#x3c4;_1_0: SwiftUI.View&gt;(_: &#x3c4;_1_0, alignment: SwiftUI.Alignment) -&gt; some&gt;&gt;.0 in closure #2 () -&gt; SwiftUI.TupleView&lt;(&lt;&lt;opaque return type of SwiftUI.View.buttonStyle&lt;&#x3c4;_0_0 where &#x3c4;_1_0: SwiftUI.PrimitiveButtonStyle&gt;(&#x3c4;_1_0) -&gt; some&gt;&gt;.0, &lt;&lt;opaque return type of SwiftUI.View.buttonStyle&lt;&#x3c4;_0_0 where &#x3c4;_1_0: SwiftUI.PrimitiveButtonStyle&gt;(&#x3c4;_1_0) -&gt; some&gt;&gt;.0)&gt; in closure #1 () -&gt; SwiftUI.TupleView&lt;(&lt;&lt;opaque return type of SwiftUI.View.padding(SwiftUI.Edge.Set, Swift.Optional&lt;CoreGraphics.CGFloat&gt;) -&gt; some&gt;&gt;.0, &lt;&lt;opaque return type of SwiftUI.View.padding(SwiftUI.Edge.Set, Swift.Optional&lt;CoreGraphics.CGFloat&gt;) -&gt; some&gt;&gt;.0, SwiftUI.Spacer, &lt;&lt;opaque return type of SwiftUI.View.padding(SwiftUI.Edge.Set, Swift.Optional&lt;CoreGraphics.CGFloat&gt;) -&gt; some&gt;&gt;.0)&gt; in closure #2 () -&gt; &lt;&lt;opaque return type of SwiftUI.View.background&lt;&#x3c4;_0_0 where &#x3c4;_1_0: SwiftUI.ShapeStyle&gt;(_: &#x3c4;_1_0, ignoresSafeAreaEdges: SwiftUI.Edge.Set) -&gt; some&gt;&gt;.0 in Special_children_learning_app.ContentView.body.getter : some"
-                  moduleName = "Special children learning app.debug.dylib"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/stevenhertz/Documents/Special%20children%20learning%20app/Special%20children%20learning%20app/Views/ContentView.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "249"
-                  endingLineNumber = "249">
-               </Location>
-            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

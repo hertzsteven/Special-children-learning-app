@@ -71,7 +71,7 @@ struct mediaCollectionCardView: View {
                 }) {
                     Image(systemName: "pencil.circle.fill")
                         .font(.system(size: 44))
-                        .foregroundColor(.blue)
+                        .foregroundColor(Color(red: 0.4, green: 0.6, blue: 0.8))
                         .background(Color.white)
                         .clipShape(Circle())
                         .shadow(color: .black.opacity(0.2), radius: 2, x: 0, y: 1)

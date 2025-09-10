@@ -132,13 +132,26 @@ struct MediaCollectionPlayerView: View {
                 VStack {
                     HStack {
                         Spacer()
-                        Button(action: onDismiss) {
+                        ZStack {
                             Image(systemName: "xmark.circle.fill")
-                                .font(.system(size: 40))
+                                .font(.largeTitle)
                                 .foregroundColor(.white)
-                                .background(Color.black.opacity(0.6))
+                                .background(Color.black.opacity(0.5))
                                 .clipShape(Circle())
                         }
+                        .onLongPressGesture {
+                            onDismiss()
+                        }
+                        .onTapGesture {
+                            // Do nothing to prevent any tap action
+                        }
+//                        Button(action: onDismiss) {
+//                            Image(systemName: "xmark.circle.fill")
+//                                .font(.system(size: 40))
+//                                .foregroundColor(.white)
+//                                .background(Color.black.opacity(0.6))
+//                                .clipShape(Circle())
+//                        }
                         .padding(.trailing, 30)
                         .padding(.top, 30)
                     }
