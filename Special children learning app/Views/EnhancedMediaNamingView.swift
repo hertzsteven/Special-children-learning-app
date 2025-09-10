@@ -34,6 +34,7 @@ struct EnhancedMediaNamingView: View {
     @StateObject private var voiceMemoModel = VoiceMemoModel()
     @State private var currentAudioURL: URL?
     @State private var hasRecordedAudio = false
+    @State private var audioPlayer: AVAudioPlayer? = nil
     
     @StateObject private var photoLibraryManager = PhotoLibraryManager()
     
@@ -465,7 +466,7 @@ struct EnhancedMediaNamingView: View {
                             Image(systemName: voiceMemoModel.isRecording ? "stop.circle.fill" : "mic.circle.fill")
                                 .foregroundColor(voiceMemoModel.isRecording ? .red : .orange)
                             
-                            Text(voiceMemoModel.isRecording ? "Recording..." : "Record Audio")
+                            Text(voiceMemoModel.isRecording ? "Stop - Recording..." : "Record Audio")
                                 .fontWeight(.medium)
                             
                             if voiceMemoModel.isRecording {
@@ -701,14 +702,21 @@ struct EnhancedMediaNamingView: View {
     }
     
     private func playAudioFile(at url: URL) {
-        // Simple audio playback - you could enhance this with your VoiceMemoModel
+        // Keep a strong reference to the player so it isn't deallocated immediately
         do {
             let audioSession = AVAudioSession.sharedInstance()
             try audioSession.setCategory(.playback, mode: .default)
-            try audioSession.setActive(true)
+            try audioSession.setActive(true, options: [])
             
-            let player = try AVAudioPlayer(contentsOf: url)
-            player.play()
+            // Ensure the file exists
+            guard FileManager.default.fileExists(atPath: url.path) else {
+                print("Audio file does not exist at path: \(url.path)")
+                return
+            }
+            
+            audioPlayer = try AVAudioPlayer(contentsOf: url)
+            audioPlayer?.prepareToPlay()
+            audioPlayer?.play()
         } catch {
             print("Error playing audio: \(error)")
         }
