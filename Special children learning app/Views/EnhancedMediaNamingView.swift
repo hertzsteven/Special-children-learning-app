@@ -36,6 +36,10 @@ struct EnhancedMediaNamingView: View {
     @State private var hasRecordedAudio = false
     @State private var audioPlayer: AVAudioPlayer? = nil
     
+    @State private var isPlaying = false
+    @State private var playbackElapsed: TimeInterval = 0
+    @State private var playbackTimer: Timer? = nil
+    
     @StateObject private var photoLibraryManager = PhotoLibraryManager()
     
     init(
@@ -419,6 +423,7 @@ struct EnhancedMediaNamingView: View {
                     
                     Button {
                         // Clear and re-open recorder
+                        stopPlayback()
                         hasRecordedAudio = false
                         currentAudioURL = nil
                         voiceMemoModel.toggleRecord()
@@ -433,6 +438,19 @@ struct EnhancedMediaNamingView: View {
                     Text(durationText)
                         .font(.caption)
                         .foregroundColor(.secondary)
+                }
+                if isPlaying {
+                    HStack(spacing: 8) {
+                        Label("Playing… \(formatTime(playbackElapsed))", systemImage: "waveform")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Spacer(minLength: 0)
+                        Button("Stop") {
+                            stopPlayback()
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                    }
                 }
             } else {
                 Button {
@@ -457,6 +475,7 @@ struct EnhancedMediaNamingView: View {
                     }
                 }
             }
+            
         }
     }
     
@@ -584,6 +603,7 @@ struct EnhancedMediaNamingView: View {
     private func loadCurrentItem() {
         guard let item = currentItem else { return }
 
+        stopPlayback()
         currentName = item.customName
         thumbnailImage = nil
         hasRecordedAudio = false
@@ -686,6 +706,11 @@ struct EnhancedMediaNamingView: View {
             audioPlayer = try AVAudioPlayer(contentsOf: url)
             audioPlayer?.prepareToPlay()
             audioPlayer?.play()
+            
+            // Start “now playing” indicator
+            isPlaying = true
+            startPlaybackTimer()
+            
         } catch {
             print("Error playing audio: \(error)")
         }
@@ -697,6 +722,29 @@ struct EnhancedMediaNamingView: View {
         let m = s / 60
         let r = s % 60
         return String(format: "%02d:%02d.%02d", m, r, ms)
+    }
+    
+    private func startPlaybackTimer() {
+        playbackTimer?.invalidate()
+        playbackTimer = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true) { _ in
+            if let player = audioPlayer {
+                playbackElapsed = player.currentTime
+                if !player.isPlaying {
+                    stopPlayback()
+                }
+            } else {
+                stopPlayback()
+            }
+        }
+    }
+
+    private func stopPlayback() {
+        audioPlayer?.stop()
+        audioPlayer = nil
+        playbackTimer?.invalidate()
+        playbackTimer = nil
+        isPlaying = false
+        playbackElapsed = 0
     }
 }
 
@@ -728,6 +776,8 @@ extension MediaItemForNaming {
         print("createFromAssets returning \(items.count) items")
         return items
     }
+    
+
 }
 
 //
