@@ -268,7 +268,9 @@ struct MediaItemEditView: View {
                 HStack {
                     Image(systemName: "stop.circle.fill")
                         .foregroundColor(.red)
-                    
+                    Text("Stop")
+                        .fontWeight(.bold)
+                        .padding(.trailing, 6)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Recording...")
                             .fontWeight(.medium)

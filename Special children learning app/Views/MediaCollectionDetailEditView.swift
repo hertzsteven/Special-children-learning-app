@@ -40,6 +40,82 @@ struct MediaCollectionDetailEditView: View {
         self._currentTitle = State(initialValue: mediaCollection.title)
     }
     
+    // NEW: Computed property for dynamic button subtitle
+    private var addMediaButtonSubtitle: String {
+        if mediaItems.isEmpty {
+            return "Add photos or videos to this collection"
+        }
+        
+        // Check what types of media are currently in the collection
+        let identifiers = mediaItems.map { $0.assetIdentifier }
+        let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: identifiers, options: nil)
+        
+        var hasPhotos = false
+        var hasVideos = false
+        
+        fetchResult.enumerateObjects { asset, _, _ in
+            if asset.mediaType == .image {
+                hasPhotos = true
+            } else if asset.mediaType == .video {
+                hasVideos = true
+            }
+        }
+        
+        if hasPhotos && hasVideos {
+            return "Add more photos or videos"
+        } else if hasPhotos {
+            return "Add more photos"
+        } else if hasVideos {
+            return "Add more videos"
+        } else {
+            // Fallback for edge case
+            return "Add photos or videos to this collection"
+        }
+    }
+
+    // NEW: Computed property to determine allowed media filters based on current collection content
+    private var allowedMediaFilters: Set<MediaFilter> {
+        if mediaItems.isEmpty {
+            return [.photos, .videos] // Allow both for empty collections
+        }
+        
+        // Check what types of media are currently in the collection
+        let identifiers = mediaItems.map { $0.assetIdentifier }
+        let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: identifiers, options: nil)
+        
+        var hasPhotos = false
+        var hasVideos = false
+        
+        fetchResult.enumerateObjects { asset, _, _ in
+            if asset.mediaType == .image {
+                hasPhotos = true
+            } else if asset.mediaType == .video {
+                hasVideos = true
+            }
+        }
+        
+        if hasPhotos && !hasVideos {
+            return [.photos] // Only allow photos
+        } else if hasVideos && !hasPhotos {
+            return [.videos] // Only allow videos
+        } else {
+            // Mixed content - allow both (shouldn't happen often but good fallback)
+            return [.photos, .videos]
+        }
+    }
+    
+    // NEW: Computed property to determine initial filter
+    private var preferredMediaFilter: MediaFilter {
+        let allowed = allowedMediaFilters
+        if allowed.contains(.photos) {
+            return .photos
+        } else if allowed.contains(.videos) {
+            return .videos
+        } else {
+            return .photos // Fallback
+        }
+    }
+
     var body: some View {
         List {
             // NEW: Add Media Button Section
@@ -56,7 +132,7 @@ struct MediaCollectionDetailEditView: View {
                             Text("Add More Media")
                                 .font(.headline)
                                 .foregroundColor(.primary)
-                            Text("Add photos or videos to this collection")
+                            Text(addMediaButtonSubtitle)
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -198,7 +274,10 @@ struct MediaCollectionDetailEditView: View {
                     // For adding to existing collection, ignore the collection name
                     // and just add the named items
                     addNamedItemsToExistingCollection(namedItems)
-                }
+                },
+                skipCollectionNaming: true,
+                initialFilter: preferredMediaFilter,
+                allowedFilters: allowedMediaFilters
             )
         }
         // MODIFIED: Use skipCollectionNaming parameter

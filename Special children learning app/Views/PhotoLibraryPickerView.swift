@@ -21,7 +21,7 @@ struct PhotoLibraryPickerView: View {
     let onVideoSelected: (PHAsset) -> Void
     let onIndividualMediaSelected: ([SavedMediaItem], String) -> Void // Updated signature
     
-    @State private var mediaFilter: MediaFilter = .photos
+    @State private var mediaFilter: MediaFilter
     @State private var selectedAlbum: PhotoAlbum?
     @State private var searchText = ""
     @State private var mediaItems: [MediaItem] = []
@@ -35,7 +35,8 @@ struct PhotoLibraryPickerView: View {
     private let sidebarWidth: CGFloat = 280
     
     let skipCollectionNaming: Bool
-    
+    let allowedFilters: Set<MediaFilter> // NEW: Which filters are allowed
+
     var selectedVideoAssets: [PHAsset] {
         mediaItems.compactMap { item in
             selectedMedia.contains(item.id) && item.isVideo ? item.asset : nil
@@ -68,11 +69,15 @@ struct PhotoLibraryPickerView: View {
     init(
         onVideoSelected: @escaping (PHAsset) -> Void,
         onIndividualMediaSelected: @escaping ([SavedMediaItem], String) -> Void,
-        skipCollectionNaming: Bool = true
+        skipCollectionNaming: Bool = true,
+        initialFilter: MediaFilter = .photos,
+        allowedFilters: Set<MediaFilter> = [.photos, .videos] // NEW: Default allows both
     ) {
         self.onVideoSelected = onVideoSelected
         self.onIndividualMediaSelected = onIndividualMediaSelected
         self.skipCollectionNaming = skipCollectionNaming
+        self.allowedFilters = allowedFilters
+        self._mediaFilter = State(initialValue: initialFilter)
     }
     
     var body: some View {
@@ -107,11 +112,17 @@ struct PhotoLibraryPickerView: View {
                             .cornerRadius(10)
                             
                             Picker("Media Type", selection: $mediaFilter) {
-                                Text("Photos").tag(MediaFilter.photos)
-                                Text("Videos").tag(MediaFilter.videos)
-//                                Text("All").tag(MediaFilter.all)
+                                if allowedFilters.contains(.photos) {
+                                    Text("Photos").tag(MediaFilter.photos)
+                                }
+                                if allowedFilters.contains(.videos) {
+                                    Text("Videos").tag(MediaFilter.videos)
+                                }
+                                // Commented out "All" option as it's not used
+                                // Text("All").tag(MediaFilter.all)
                             }
                             .pickerStyle(SegmentedPickerStyle())
+                            .disabled(allowedFilters.count == 1) // NEW: Disable if only one option
                         }
                         .padding()
                         .padding(.top, 20)
