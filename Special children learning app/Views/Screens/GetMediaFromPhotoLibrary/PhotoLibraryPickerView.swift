@@ -15,6 +15,11 @@ enum MediaFilter: Hashable {
     case all
 }
 
+struct NamingPayload: Identifiable {
+    let id = UUID()
+    let assets: [PHAsset]
+}
+
 struct PhotoLibraryPickerView: View {
     @StateObject private var photoLibraryManager = PhotoLibraryManager()
     @Environment(\.dismiss) private var dismiss
@@ -31,6 +36,7 @@ struct PhotoLibraryPickerView: View {
     @State private var selectedMedia: Set<String> = []
     @State private var showingIndividualNaming = false // Show individual naming view
     @State private var pendingAssets: [PHAsset] = []
+    @State private var namingPayload: NamingPayload? = nil
     
     private let sidebarWidth: CGFloat = 280
     
@@ -59,7 +65,7 @@ struct PhotoLibraryPickerView: View {
         if searchText.isEmpty {
             return photoLibraryManager.albums
         } else {
-            return photoLibraryManager.albums.filter { 
+            return photoLibraryManager.albums.filter {
                 $0.title.localizedCaseInsensitiveContains(searchText)
             }
         }
@@ -293,38 +299,20 @@ struct PhotoLibraryPickerView: View {
                 await fetchAlbumsForCurrentFilter()
             }
         }
-        // Individual naming sheet
-        .sheet(isPresented: $showingIndividualNaming) {
-            if !pendingAssets.isEmpty {
-                EnhancedMediaNamingView(
-                    mediaItems: MediaItemForNaming.createFromAssets(pendingAssets),
-                    onCollectionComplete: { namedItems, collectionName in
-                        onIndividualMediaSelected(namedItems, collectionName)
-                        dismiss()
-                    },
-                    onCancel: {
-                        showingIndividualNaming = false
-                        pendingAssets = []
-                    },
-                    skipCollectionNaming: skipCollectionNaming
-                )
-            } else {
-                // Fallback view if no assets
-                VStack(spacing: 20) {
-                    Text("No media selected")
-                        .font(.title2)
-                    
-                    Button("Close") {
-                        showingIndividualNaming = false
-                        pendingAssets = []
-                    }
-                    .padding()
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
-                }
-                .padding()
-            }
+        // Individual naming sheet using item-based initializer
+        .sheet(item: $namingPayload) { payload in
+            EnhancedMediaNamingView(
+                mediaItems: MediaItemForNaming.createFromAssets(payload.assets),
+                onCollectionComplete: { namedItems, collectionName in
+                    onIndividualMediaSelected(namedItems, collectionName)
+                    dismiss()
+                },
+                onCancel: {
+                    namingPayload = nil
+                    pendingAssets = []
+                },
+                skipCollectionNaming: skipCollectionNaming
+            )
         }
     }
     
@@ -388,10 +376,7 @@ struct PhotoLibraryPickerView: View {
             // Treat single and multiple selections the same: go to individual naming
             print("Opening individual naming with \(allAssets.count) assets")
             pendingAssets = allAssets
-            // Add a small delay to ensure pendingAssets is set before showing sheet
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                showingIndividualNaming = true
-            }
+            namingPayload = NamingPayload(assets: allAssets)
         } else {
             print("No assets selected!")
         }
