@@ -76,7 +76,6 @@ struct MediaCollectionDetailEditView: View {
                 ForEach(mediaItems) { item in
                     Button(action: {
                         itemToEdit = item
-                        showingMediaItemEditor = true
                     }) {
                         HStack(spacing: 16) {
                             // Thumbnail
@@ -162,33 +161,30 @@ struct MediaCollectionDetailEditView: View {
         .onAppear {
             loadThumbnails()
         }
-        .sheet(isPresented: $showingMediaItemEditor) {
-            if let itemToEdit = itemToEdit {
-                MediaItemEditView(
-                    mediaItem: itemToEdit,
-                    collectionId: mediaCollectionItem.id,
-                    onSave: { updatedItem in
-                        // The updatedItem from onSave now contains the LATEST name and audio state.
-                        // Simply update local state with this item.
-                        if let index = mediaItems.firstIndex(where: { $0.id == updatedItem.id }) {
-                            mediaItems.remove(at: index)
-                            mediaItems.insert(updatedItem, at: index)
-//                            mediaItems[index] = updatedItem
-                        }
-                        
-                        // Persist change
-                        VideoCollectionPersistence.shared.updateMediaItemInCollection(mediaCollectionItem.id, updatedMediaItem: updatedItem)
-                        
-                        // Notify parent view
-                        notifyParentOfUpdate()
-                        
-                        showingMediaItemEditor = false
-                    },
-                    onCancel: {
-                        showingMediaItemEditor = false
+        .sheet(item: $itemToEdit) { item in
+            MediaItemEditView(
+                mediaItem: item,
+                collectionId: mediaCollectionItem.id,
+                onSave: { updatedItem in
+                    // The updatedItem from onSave now contains the LATEST name and audio state.
+                    // Simply update local state with this item.
+                    if let index = mediaItems.firstIndex(where: { $0.id == updatedItem.id }) {
+                        mediaItems.remove(at: index)
+                        mediaItems.insert(updatedItem, at: index)
                     }
-                )
-            }
+                    
+                    // Persist change
+                    VideoCollectionPersistence.shared.updateMediaItemInCollection(mediaCollectionItem.id, updatedMediaItem: updatedItem)
+                    
+                    // Notify parent view
+                    notifyParentOfUpdate()
+                    
+                    itemToEdit = nil
+                },
+                onCancel: {
+                    itemToEdit = nil
+                }
+            )
         }
         // NEW: Media selection for adding to existing collection
         .fullScreenCover(isPresented: $showingAddMediaSelection) {
