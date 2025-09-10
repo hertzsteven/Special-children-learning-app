@@ -31,8 +31,24 @@ struct ContentView: View {
     @State private var mediaCollectionToDelete: MediaCollection?
     @State private var navPath = NavigationPath()
     
+    // NEW: Media type selection states
+    @State private var showingMediaTypeChoice = false
+    @State private var selectedMediaType: MediaType?
+    
     @StateObject private var persistence = VideoCollectionPersistence.shared
     
+    // NEW: Enum for media types
+    enum MediaType: Identifiable {
+        case photos, videos
+        
+        var id: String {
+            switch self {
+            case .photos: return "photos"
+            case .videos: return "videos"
+            }
+        }
+    }
+
     let columns = [
         GridItem(.flexible(), spacing: 20),
         GridItem(.flexible(), spacing: 20)
@@ -52,7 +68,7 @@ struct ContentView: View {
                 
                 VStack(spacing: 30) {
                     Button(action: {
-                        showingVideoSelection = true
+                        showingMediaTypeChoice = true
                     }) {
                         HStack(spacing: 8) {
                             Image(systemName: "plus.circle.fill")
@@ -181,7 +197,110 @@ struct ContentView: View {
         }
 
         .preferredColorScheme(.light) // Always use light mode for consistency
-        .fullScreenCover(isPresented: $showingVideoSelection) {
+        // NEW: Media type selection sheet
+        .sheet(isPresented: $showingMediaTypeChoice) {
+            VStack(spacing: 30) {
+                VStack(spacing: 12) {
+                    Image(systemName: "rectangle.stack.badge.plus")
+                        .font(.system(size: 60))
+                        .foregroundColor(.blue)
+                    
+                    Text("Create New Album")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                    
+                    Text("What type of album would you like to create?")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                .padding(.top, 40)
+                
+                VStack(spacing: 16) {
+                    Button(action: {
+                        selectedMediaType = .photos
+                        showingMediaTypeChoice = false
+                    }) {
+                        HStack(spacing: 16) {
+                            Image(systemName: "photo.on.rectangle.angled")
+                                .font(.system(size: 30))
+                                .foregroundColor(.green)
+                                .frame(width: 50)
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Photo Album")
+                                    .font(.headline)
+                                    .foregroundColor(.primary)
+                                Text("Create a collection of photos")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                            }
+                            
+                            Spacer()
+                            
+                            Image(systemName: "chevron.right")
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(20)
+                        .background(Color.green.opacity(0.1))
+                        .cornerRadius(16)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16)
+                                .stroke(Color.green.opacity(0.3), lineWidth: 1)
+                        )
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    
+                    Button(action: {
+                        selectedMediaType = .videos
+                        showingMediaTypeChoice = false
+                    }) {
+                        HStack(spacing: 16) {
+                            Image(systemName: "video.fill")
+                                .font(.system(size: 30))
+                                .foregroundColor(.blue)
+                                .frame(width: 50)
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Video Album")
+                                    .font(.headline)
+                                    .foregroundColor(.primary)
+                                Text("Create a collection of videos")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                            }
+                            
+                            Spacer()
+                            
+                            Image(systemName: "chevron.right")
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(20)
+                        .background(Color.blue.opacity(0.1))
+                        .cornerRadius(16)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16)
+                                .stroke(Color.blue.opacity(0.3), lineWidth: 1)
+                        )
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+                .padding(.horizontal, 20)
+                
+                Spacer()
+                
+                Button("Cancel") {
+                    showingMediaTypeChoice = false
+                    selectedMediaType = nil
+                }
+                .font(.headline)
+                .foregroundColor(.secondary)
+                .padding(.bottom, 40)
+            }
+            .background(Color(.systemBackground))
+        }
+
+        .fullScreenCover(item: $selectedMediaType) { mediaType in
             PhotoLibraryPickerView(
                 onVideoSelected: { selectedAsset in
                     // Handle single photos and videos
@@ -200,10 +319,15 @@ struct ContentView: View {
                 onIndividualMediaSelected: { namedItems, collectionName in
                     // Handle the new collection creation
                     addNamedMediaCollection(namedItems: namedItems, collectionName: collectionName)
+                    // Reset selected media type
+                    selectedMediaType = nil
                 },
-                skipCollectionNaming: false 
+                skipCollectionNaming: false,
+                initialFilter: mediaType == .photos ? .photos : .videos,
+                allowedFilters: mediaType == .photos ? [.photos] : [.videos]
             )
         }
+
         .sheet(isPresented: $showingSettings) {
             SettingsView()
         }
@@ -447,6 +571,9 @@ struct ContentView: View {
                 // Show confirmation
                 toastMessage = "'\(finalName)' created with \(allAssets.count) items!"
                 showToast = true
+                
+                // NEW: Reset selected media type
+                selectedMediaType = nil
                 
                 print("Collection created successfully with \(allAssets.count) items")
             }

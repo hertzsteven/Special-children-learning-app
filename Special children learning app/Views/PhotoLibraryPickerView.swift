@@ -73,6 +73,7 @@ struct PhotoLibraryPickerView: View {
         initialFilter: MediaFilter = .photos,
         allowedFilters: Set<MediaFilter> = [.photos, .videos] // NEW: Default allows both
     ) {
+        print("🚀 PhotoLibraryPickerView init - initialFilter: \(initialFilter), allowedFilters: \(allowedFilters)")
         self.onVideoSelected = onVideoSelected
         self.onIndividualMediaSelected = onIndividualMediaSelected
         self.skipCollectionNaming = skipCollectionNaming
@@ -118,11 +119,17 @@ struct PhotoLibraryPickerView: View {
                                 if allowedFilters.contains(.videos) {
                                     Text("Videos").tag(MediaFilter.videos)
                                 }
-                                // Commented out "All" option as it's not used
-                                // Text("All").tag(MediaFilter.all)
                             }
                             .pickerStyle(SegmentedPickerStyle())
-                            .disabled(allowedFilters.count == 1) // NEW: Disable if only one option
+                            .disabled(allowedFilters.count == 1) // Disable if only one option
+                            .onAppear {
+                                // Ensure the filter matches what's allowed
+                                if !allowedFilters.contains(mediaFilter) {
+                                    if let firstAllowed = allowedFilters.first {
+                                        mediaFilter = firstAllowed
+                                    }
+                                }
+                            }
                         }
                         .padding()
                         .padding(.top, 20)
