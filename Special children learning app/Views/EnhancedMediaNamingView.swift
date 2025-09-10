@@ -294,7 +294,7 @@ struct EnhancedMediaNamingView: View {
                 // Audio recording section
                 audioRecordingSection()
                 
-                Spacer(minLength: 100)
+                Spacer(minLength: 12) // Reduced to avoid large gap above footer
             }
             .padding()
         }
@@ -351,15 +351,15 @@ struct EnhancedMediaNamingView: View {
     }
     
     private func namingSection(for item: MediaItemForNaming) -> some View {
-        VStack(spacing: 16) {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Give this \(item.isVideo ? "video" : "photo") a name")
-                    .font(.headline)
-                
-                Text("Choose a name that will help you remember what this \(item.isVideo ? "video" : "photo") is about.")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-            }
+//        VStack(spacing: 16) {
+//            VStack(alignment: .leading, spacing: 8) {
+//                Text("Give this \(item.isVideo ? "video" : "photo") a name")
+//                    .font(.headline)
+//
+//                Text("Choose a name that will help you remember what this \(item.isVideo ? "video" : "photo") is about.")
+//                    .font(.subheadline)
+//                    .foregroundColor(.secondary)
+//            }
             
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
@@ -394,101 +394,70 @@ struct EnhancedMediaNamingView: View {
                         .foregroundColor(.red.opacity(0.7))
                 }
             }
-        }
+//        }
     }
     
+    // Helper for displaying elapsed time while recording
+    private var durationText: String {
+        formatTime(voiceMemoModel.elapsed)
+    }
+
     private func audioRecordingSection() -> some View {
-        VStack(spacing: 16) {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Image(systemName: "mic.circle.fill")
-                        .foregroundColor(.orange)
-                    Text("Audio Description (Optional)")
-                        .font(.headline)
-                    Spacer()
-                }
-                
-                Text("Record an audio description or note for this \(currentItem?.isVideo == true ? "video" : "photo").")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-            }
-            
-            VStack(spacing: 12) {
-                if hasRecordedAudio {
-                    // Show recorded audio info
-                    VStack(spacing: 8) {
-                        HStack {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(.green)
-                            Text("Audio Recorded")
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                            Spacer()
+        VStack(alignment: .leading, spacing: 8) {
+            // No "Add audio note" header, no gray background/container.
+            if hasRecordedAudio {
+                HStack(spacing: 8) {
+                    Button {
+                        if let url = currentAudioURL {
+                            playAudioFile(at: url)
                         }
-                        
-                        HStack(spacing: 12) {
-                            Button("Play Recording") {
-                                if let url = currentAudioURL {
-                                    playAudioFile(at: url)
-                                }
-                            }
-                            .font(.caption)
-                            .foregroundColor(.blue)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(Color.blue.opacity(0.1))
-                            .cornerRadius(12)
-                            
-                            Button("Record New") {
-                                hasRecordedAudio = false
-                                currentAudioURL = nil
-                                voiceMemoModel.toggleRecord()
-                            }
-                            .font(.caption)
-                            .foregroundColor(.orange)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(Color.orange.opacity(0.1))
-                            .cornerRadius(12)
-                            
-                            Spacer()
-                        }
+                    } label: {
+                        Label("Play", systemImage: "play.circle.fill")
+                            .font(.headline)
                     }
-                    .padding()
-                    .background(Color.green.opacity(0.1))
-                    .cornerRadius(12)
-                } else {
-                    // Record audio button
-                    Button(action: {
+                    .buttonStyle(.borderedProminent)
+                    
+                    Button {
+                        // Clear and re-open recorder
+                        hasRecordedAudio = false
+                        currentAudioURL = nil
                         voiceMemoModel.toggleRecord()
-                    }) {
-                        HStack {
-                            Image(systemName: voiceMemoModel.isRecording ? "stop.circle.fill" : "mic.circle.fill")
-                                .foregroundColor(voiceMemoModel.isRecording ? .red : .orange)
-                            
-                            Text(voiceMemoModel.isRecording ? "Stop - Recording..." : "Record Audio")
-                                .fontWeight(.medium)
-                            
-                            if voiceMemoModel.isRecording {
-                                Text("(\(formatTime(voiceMemoModel.elapsed)))")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-                        }
-                        .font(.subheadline)
-                        .foregroundColor(voiceMemoModel.isRecording ? .red : .orange)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 10)
-                        .background(
-                            RoundedRectangle(cornerRadius: 20)
-                                .stroke(voiceMemoModel.isRecording ? Color.red : Color.orange, lineWidth: 2)
-                        )
+                    } label: {
+                        Label("Re-record", systemImage: "mic")
                     }
-                    .disabled(voiceMemoModel.isPromptPresented)
+                    .buttonStyle(.bordered)
+                    
+                    Spacer(minLength: 0)
+                    
+                    // Optional: duration chip if you track it
+                    Text(durationText)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            } else {
+                Button {
+                    voiceMemoModel.toggleRecord()
+                } label: {
+                    Label(voiceMemoModel.isRecording ? "Stop – Recording…" : "Record Audio Note",
+                          systemImage: voiceMemoModel.isRecording ? "stop.circle.fill" : "mic.circle.fill")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.regular)
+                .disabled(voiceMemoModel.isPromptPresented)
+                
+                if voiceMemoModel.isRecording {
+                    HStack(spacing: 6) {
+                        ProgressView().scaleEffect(0.8)
+                        Text("Recording… \(durationText)")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Spacer(minLength: 0)
+                    }
                 }
             }
         }
-        .padding(.top, 8)
     }
     
     private var collectionNamingView: some View {
@@ -766,7 +735,7 @@ extension MediaItemForNaming {
 //    let mediaItems: [MediaItemForNaming]
 //    let onCollectionComplete: ([SavedMediaItem], String) -> Void
 //    let onCancel: () -> Void
-//    
+//
 //    @State private var currentIndex = 0
 //    @State private var workingItems: [MediaItemForNaming]
 //    @State private var currentName = ""
@@ -774,14 +743,14 @@ extension MediaItemForNaming {
 //    @State private var isLoadingThumbnail = false
 //    @State private var showingCollectionNaming = false
 //    @State private var collectionName = ""
-//    
+//
 //    // Audio recording states
 //    @StateObject private var voiceMemoModel = VoiceMemoModel()
 //    @State private var currentAudioURL: URL?
 //    @State private var hasRecordedAudio = false
-//    
+//
 //    @StateObject private var photoLibraryManager = PhotoLibraryManager()
-//    
+//
 //    init(
 //        mediaItems: [MediaItemForNaming],
 //        onCollectionComplete: @escaping ([SavedMediaItem], String) -> Void,
@@ -794,33 +763,33 @@ extension MediaItemForNaming {
 //        self._currentName = State(initialValue: mediaItems.first?.customName ?? "")
 //        self._collectionName = State(initialValue: "My Photo Collection")
 //    }
-//    
+//
 //    private var currentItem: MediaItemForNaming? {
 //        guard currentIndex < workingItems.count else { return nil }
 //        return workingItems[currentIndex]
 //    }
-//    
+//
 //    private var progressText: String {
 //        if workingItems.isEmpty { return "0 of 0" }
 //        let clampedIndex = min(currentIndex, max(workingItems.count - 1, 0))
 //        return "\(clampedIndex + 1) of \(workingItems.count)"
 //    }
-//    
+//
 //    private var canProceedToNext: Bool {
 //        !currentName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
 //    }
-//    
+//
 //    var body: some View {
 //        ZStack {
 //            Color(.systemBackground)
 //                .ignoresSafeArea(.all)
-//            
+//
 //            VStack(spacing: 0) {
 //                // Header
 //                headerView
-//                
+//
 //                Divider()
-//                
+//
 //                // Main content
 //                if workingItems.isEmpty {
 //                    emptyStateView
@@ -831,9 +800,9 @@ extension MediaItemForNaming {
 //                } else {
 //                    completionTransitionView
 //                }
-//                
+//
 //                Divider()
-//                
+//
 //                // Bottom controls
 //                if !workingItems.isEmpty && !showingCollectionNaming {
 //                    bottomControlsView
@@ -854,7 +823,7 @@ extension MediaItemForNaming {
 //                }
 //        }
 //    }
-//    
+//
 //    private var headerView: some View {
 //        VStack(spacing: 12) {
 //            HStack {
@@ -862,15 +831,15 @@ extension MediaItemForNaming {
 //                    onCancel()
 //                }
 //                .foregroundColor(.red)
-//                
+//
 //                Spacer()
-//                
+//
 //                Text("Name Your Media")
 //                    .font(.headline)
 //                    .fontWeight(.semibold)
-//                
+//
 //                Spacer()
-//                
+//
 //                Text(progressText)
 //                    .font(.caption)
 //                    .foregroundColor(.secondary)
@@ -879,7 +848,7 @@ extension MediaItemForNaming {
 //                    .background(Color(.systemGray6))
 //                    .cornerRadius(12)
 //            }
-//            
+//
 //            // Progress bar
 //            ProgressView(value: Double(currentIndex), total: Double(workingItems.count))
 //                .progressViewStyle(LinearProgressViewStyle(tint: .blue))
@@ -887,23 +856,23 @@ extension MediaItemForNaming {
 //        .padding()
 //        .padding(.top, 10)
 //    }
-//    
+//
 //    private var emptyStateView: some View {
 //        VStack(spacing: 20) {
 //            Image(systemName: "exclamationmark.triangle")
 //                .font(.system(size: 60))
 //                .foregroundColor(.orange)
-//            
+//
 //            Text("No Media Items")
 //                .font(.title2)
 //                .fontWeight(.bold)
-//            
+//
 //            Text("There were no media items to name. Please go back and select some photos or videos.")
 //                .font(.subheadline)
 //                .foregroundColor(.secondary)
 //                .multilineTextAlignment(.center)
 //                .padding(.horizontal)
-//            
+//
 //            Button("Go Back") {
 //                onCancel()
 //            }
@@ -914,27 +883,27 @@ extension MediaItemForNaming {
 //        }
 //        .frame(maxWidth: .infinity, maxHeight: .infinity)
 //    }
-//    
+//
 //    private var completionTransitionView: some View {
 //        VStack(spacing: 24) {
 //            Spacer()
-//            
+//
 //            Image(systemName: "checkmark.circle.fill")
 //                .font(.system(size: 60))
 //                .foregroundColor(.green)
-//            
+//
 //            VStack(spacing: 8) {
 //                Text("Great Job!")
 //                    .font(.title2)
 //                    .fontWeight(.bold)
-//                
+//
 //                Text("You've named all your media items. Now let's give your collection a name.")
 //                    .font(.subheadline)
 //                    .foregroundColor(.secondary)
 //                    .multilineTextAlignment(.center)
 //                    .padding(.horizontal)
 //            }
-//            
+//
 //            Button("Name Collection") {
 //                showingCollectionNaming = true
 //            }
@@ -944,29 +913,29 @@ extension MediaItemForNaming {
 //            .padding(.vertical, 12)
 //            .background(Color.blue)
 //            .cornerRadius(25)
-//            
+//
 //            Spacer()
 //        }
 //    }
-//    
+//
 //    private func mainContentView(for item: MediaItemForNaming) -> some View {
 //        ScrollView {
 //            VStack(spacing: 24) {
 //                // Media preview
 //                mediaPreviewView(for: item)
-//                
+//
 //                // Naming section
 //                namingSection(for: item)
-//                
+//
 //                // Audio recording section
 //                audioRecordingSection()
-//                
+//
 //                Spacer(minLength: 100)
 //            }
 //            .padding()
 //        }
 //    }
-//    
+//
 //    private func mediaPreviewView(for item: MediaItemForNaming) -> some View {
 //        VStack(spacing: 16) {
 //            // Media type indicator
@@ -978,13 +947,13 @@ extension MediaItemForNaming {
 //                    .foregroundColor(item.isVideo ? .blue : .green)
 //                Spacer()
 //            }
-//            
+//
 //            // Thumbnail
 //            ZStack {
 //                RoundedRectangle(cornerRadius: 16)
 //                    .fill(Color(.systemGray6))
 //                    .frame(height: 200)
-//                
+//
 //                if isLoadingThumbnail {
 //                    ProgressView()
 //                        .scaleEffect(1.2)
@@ -1004,7 +973,7 @@ extension MediaItemForNaming {
 //                            .foregroundColor(.secondary)
 //                    }
 //                }
-//                
+//
 //                // Play icon for videos
 //                if item.isVideo && thumbnailImage != nil {
 //                    Image(systemName: "play.circle.fill")
@@ -1016,18 +985,18 @@ extension MediaItemForNaming {
 //            }
 //        }
 //    }
-//    
+//
 //    private func namingSection(for item: MediaItemForNaming) -> some View {
 //        VStack(spacing: 16) {
 //            VStack(alignment: .leading, spacing: 8) {
 //                Text("Give this \(item.isVideo ? "video" : "photo") a name")
 //                    .font(.headline)
-//                
+//
 //                Text("Choose a name that will help you remember what this \(item.isVideo ? "video" : "photo") is about.")
 //                    .font(.subheadline)
 //                    .foregroundColor(.secondary)
 //            }
-//            
+//
 //            VStack(alignment: .leading, spacing: 8) {
 //                HStack {
 //                    Text("Name")
@@ -1038,7 +1007,7 @@ extension MediaItemForNaming {
 //                        .font(.caption2)
 //                        .foregroundColor(.secondary)
 //                }
-//                
+//
 //                TextField("Enter a name...", text: $currentName)
 //                    .textFieldStyle(.roundedBorder)
 //                    .font(.body)
@@ -1054,7 +1023,7 @@ extension MediaItemForNaming {
 //                            currentName = String(newValue.prefix(50))
 //                        }
 //                    }
-//                
+//
 //                if currentName.isEmpty {
 //                    Text("Please enter a name to continue")
 //                        .font(.caption)
@@ -1063,7 +1032,7 @@ extension MediaItemForNaming {
 //            }
 //        }
 //    }
-//    
+//
 //    private func audioRecordingSection() -> some View {
 //        VStack(spacing: 16) {
 //            VStack(alignment: .leading, spacing: 8) {
@@ -1074,12 +1043,12 @@ extension MediaItemForNaming {
 //                        .font(.headline)
 //                    Spacer()
 //                }
-//                
+//
 //                Text("Record an audio description or note for this \(currentItem?.isVideo == true ? "video" : "photo").")
 //                    .font(.subheadline)
 //                    .foregroundColor(.secondary)
 //            }
-//            
+//
 //            VStack(spacing: 12) {
 //                if hasRecordedAudio {
 //                    // Show recorded audio info
@@ -1092,7 +1061,7 @@ extension MediaItemForNaming {
 //                                .fontWeight(.medium)
 //                            Spacer()
 //                        }
-//                        
+//
 //                        HStack(spacing: 12) {
 //                            Button("Play Recording") {
 //                                if let url = currentAudioURL {
@@ -1105,7 +1074,7 @@ extension MediaItemForNaming {
 //                            .padding(.vertical, 6)
 //                            .background(Color.blue.opacity(0.1))
 //                            .cornerRadius(12)
-//                            
+//
 //                            Button("Record New") {
 //                                hasRecordedAudio = false
 //                                currentAudioURL = nil
@@ -1117,7 +1086,7 @@ extension MediaItemForNaming {
 //                            .padding(.vertical, 6)
 //                            .background(Color.orange.opacity(0.1))
 //                            .cornerRadius(12)
-//                            
+//
 //                            Spacer()
 //                        }
 //                    }
@@ -1132,10 +1101,10 @@ extension MediaItemForNaming {
 //                        HStack {
 //                            Image(systemName: voiceMemoModel.isRecording ? "stop.circle.fill" : "mic.circle.fill")
 //                                .foregroundColor(voiceMemoModel.isRecording ? .red : .orange)
-//                            
+//
 //                            Text(voiceMemoModel.isRecording ? "Recording..." : "Record Audio")
 //                                .fontWeight(.medium)
-//                            
+//
 //                            if voiceMemoModel.isRecording {
 //                                Text("(\(formatTime(voiceMemoModel.elapsed)))")
 //                                    .font(.caption)
@@ -1157,7 +1126,7 @@ extension MediaItemForNaming {
 //        }
 //        .padding(.top, 8)
 //    }
-//    
+//
 //    private var collectionNamingView: some View {
 //        ScrollView {
 //            VStack(spacing: 24) {
@@ -1166,19 +1135,19 @@ extension MediaItemForNaming {
 //                    Image(systemName: "rectangle.stack.fill")
 //                        .font(.system(size: 60))
 //                        .foregroundColor(.blue)
-//                    
+//
 //                    VStack(spacing: 8) {
 //                        Text("Name Your Collection")
 //                            .font(.title2)
 //                            .fontWeight(.bold)
-//                        
+//
 //                        Text("Give your collection of \(workingItems.filter { !$0.isSkipped }.count) items a memorable name")
 //                            .font(.subheadline)
 //                            .foregroundColor(.secondary)
 //                            .multilineTextAlignment(.center)
 //                    }
 //                }
-//                
+//
 //                // Collection naming
 //                VStack(alignment: .leading, spacing: 8) {
 //                    HStack {
@@ -1190,7 +1159,7 @@ extension MediaItemForNaming {
 //                            .font(.caption2)
 //                            .foregroundColor(.secondary)
 //                    }
-//                    
+//
 //                    TextField("Enter collection name...", text: $collectionName)
 //                        .textFieldStyle(RoundedBorderTextFieldStyle())
 //                        .textInputAutocapitalization(.words)
@@ -1204,7 +1173,7 @@ extension MediaItemForNaming {
 //                            }
 //                        }
 //                }
-//                
+//
 //                // Action buttons
 //                HStack(spacing: 16) {
 //                    Button("Back") {
@@ -1216,9 +1185,9 @@ extension MediaItemForNaming {
 //                    .padding(.vertical, 12)
 //                    .background(Color(.systemGray6))
 //                    .cornerRadius(25)
-//                    
+//
 //                    Spacer()
-//                    
+//
 //                    Button("Create Collection") {
 //                        saveCollection()
 //                    }
@@ -1231,13 +1200,13 @@ extension MediaItemForNaming {
 //                    .cornerRadius(25)
 //                    .disabled(collectionName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
 //                }
-//                
+//
 //                Spacer(minLength: 100)
 //            }
 //            .padding()
 //        }
 //    }
-//    
+//
 //    private var bottomControlsView: some View {
 //        HStack(spacing: 16) {
 //            if currentItem != nil {
@@ -1269,9 +1238,9 @@ extension MediaItemForNaming {
 //        .padding()
 //        .padding(.bottom, 10)
 //    }
-//    
+//
 //    // MARK: - Helper Functions
-//    
+//
 //    private func loadCurrentItem() {
 //        guard let item = currentItem else { return }
 //
@@ -1294,29 +1263,29 @@ extension MediaItemForNaming {
 //            }
 //        }
 //    }
-//    
+//
 //    private func saveCurrentAndProceed() {
 //        guard canProceedToNext, currentIndex < workingItems.count else { return }
-//        
+//
 //        // Save current name
 //        workingItems[currentIndex].customName = currentName.trimmingCharacters(in: .whitespacesAndNewlines)
 //        workingItems[currentIndex].isSkipped = false
-//        
+//
 //        // Store audio URL if we have one
 //        if hasRecordedAudio {
 //            workingItems[currentIndex].audioURL = currentAudioURL
 //        }
-//        
+//
 //        proceedToNext()
 //    }
-//    
+//
 //    private func skipCurrentAndProceed() {
 //        guard currentIndex < workingItems.count else { return }
-//        
+//
 //        workingItems[currentIndex].isSkipped = true
 //        proceedToNext()
 //    }
-//    
+//
 //    private func proceedToNext() {
 //        if currentIndex < workingItems.count - 1 {
 //            currentIndex += 1
@@ -1330,45 +1299,45 @@ extension MediaItemForNaming {
 //    private func saveCollection() {
 //        let namedItems = workingItems.filter { !$0.isSkipped && !$0.customName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
 //        let cleanCollectionName = collectionName.trimmingCharacters(in: .whitespacesAndNewlines)
-//        
+//
 //        // Convert to SavedMediaItem with audio recordings
 //        var savedMediaItems: [SavedMediaItem] = []
 //        let persistence = VideoCollectionPersistence.shared
-//        
+//
 //        for item in namedItems {
 //            var audioFileName: String?
-//            
+//
 //            // Save audio file if we have one
 //            if let audioURL = item.audioURL {
 //                audioFileName = persistence.saveAudioRecording(from: audioURL)
 //            }
-//            
+//
 //            let savedItem = SavedMediaItem(
 //                assetIdentifier: item.asset.localIdentifier,
 //                customName: item.customName,
 //                audioRecordingFileName: audioFileName
 //            )
-//            
+//
 //            savedMediaItems.append(savedItem)
 //        }
-//        
+//
 //        onCollectionComplete(savedMediaItems, cleanCollectionName)
 //    }
-//    
+//
 //    private func playAudioFile(at url: URL) {
 //        // Simple audio playback - you could enhance this with your VoiceMemoModel
 //        do {
 //            let audioSession = AVAudioSession.sharedInstance()
 //            try audioSession.setCategory(.playback, mode: .default)
 //            try audioSession.setActive(true)
-//            
+//
 //            let player = try AVAudioPlayer(contentsOf: url)
 //            player.play()
 //        } catch {
 //            print("Error playing audio: \(error)")
 //        }
 //    }
-//    
+//
 //    private func formatTime(_ t: TimeInterval) -> String {
 //        let s = Int(t)
 //        let ms = Int((t - Double(s)) * 100)
@@ -1383,26 +1352,26 @@ extension MediaItemForNaming {
 //extension MediaItemForNaming {
 //    static func createFromAssets(_ assets: [PHAsset]) -> [MediaItemForNaming] {
 //        print("createFromAssets called with \(assets.count) assets")
-//        
+//
 //        // Sort assets by creation date (newest first)
 //        let sortedAssets = assets.sorted { (asset1, asset2) -> Bool in
 //            let date1 = asset1.creationDate ?? Date.distantPast
 //            let date2 = asset2.creationDate ?? Date.distantPast
 //            return date1 > date2
 //        }
-//        
+//
 //        var items: [MediaItemForNaming] = []
-//        
+//
 //        // Process all assets together (simpler approach)
 //        for (index, asset) in sortedAssets.enumerated() {
 //            var item = MediaItemForNaming(asset: asset, customName: "")
 //            // Use the computed defaultName
 //            item.customName = item.defaultName
-//            
+//
 //            print("Created item \(index): \(item.customName) for \(asset.mediaType == .video ? "video" : "photo")")
 //            items.append(item)
 //        }
-//        
+//
 //        print("createFromAssets returning \(items.count) items")
 //        return items
 //    }
