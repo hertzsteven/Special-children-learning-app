@@ -13,7 +13,6 @@
 /* Begin PBXFileReference section */
 		466765CA2E68B5FC00EAE1C0 /* Special children learning app.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Special children learning app.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		466766722E69D91800EAE1C0 /* Photos.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Photos.framework; path = System/Library/Frameworks/Photos.framework; sourceTree = SDKROOT; };
-		46847C892E7374730023266C /* Special children learning app.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "Special children learning app.xcodeproj"; path = "Special children learning app/Special children learning app.xcodeproj"; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -59,13 +58,6 @@
 				466766722E69D91800EAE1C0 /* Photos.framework */,
 			);
 			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		46847C8C2E7374730023266C /* Products */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			name = Products;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -120,12 +112,6 @@
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 466765CB2E68B5FC00EAE1C0 /* Products */;
 			projectDirPath = "";
-			projectReferences = (
-				{
-					ProductGroup = 46847C8C2E7374730023266C /* Products */;
-					ProjectRef = 46847C892E7374730023266C /* Special children learning app.xcodeproj */;
-				},
-			);
 			projectRoot = "";
 			targets = (
 				466765C92E68B5FC00EAE1C0 /* Special children learning app */,
@@ -300,7 +286,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.3;
+				MARKETING_VERSION = 1.21;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.dia.Special-children-learning-app";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -338,7 +324,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.3;
+				MARKETING_VERSION = 1.21;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.dia.Special-children-learning-app";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";

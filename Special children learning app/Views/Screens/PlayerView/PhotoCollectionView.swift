@@ -299,3 +299,239 @@ struct PhotoCollectionView: View {
         }
     }
 }
+
+// MARK: - Preview with Mock Data
+#Preview {
+    MockPhotoCollectionView()
+}
+
+// Mock version for preview that mimics the real PhotoCollectionView behavior
+private struct MockPhotoCollectionView: View {
+    @State private var currentIndex = 0
+    @State private var photos: [UIImage] = []
+    @State private var isLoading = true
+    @StateObject private var soundPlayer = SoundPlayer.shared
+    
+    @State private var isBouncing = false
+    @State private var showRipple = false
+    @State private var rippleScale: CGFloat = 0.5
+    @State private var rippleOpacity: Double = 0.0
+    
+    // Mock photo data with system symbols
+    private let mockPhotos = [
+        ("heart.fill", "Love Heart", UIColor.systemRed),
+        ("star.fill", "Golden Star", UIColor.systemYellow),
+        ("house.fill", "Dream House", UIColor.systemBlue),
+        ("car.fill", "Race Car", UIColor.systemGreen),
+        ("airplane", "Flying High", UIColor.systemPurple),
+        ("tree.fill", "Nature Tree", UIColor.systemTeal),
+        ("camera.fill", "My Camera", UIColor.systemOrange),
+        ("book.fill", "Story Book", UIColor.systemPink)
+    ]
+    
+    var body: some View {
+        ZStack {
+            Color.black
+                .ignoresSafeArea(.all)
+            
+            if isLoading {
+                VStack(spacing: 30) {
+                    ProgressView()
+                        .scaleEffect(2)
+                        .tint(.white)
+                    
+                    Text("Loading photos...")
+                        .font(.title2)
+                        .foregroundColor(.white)
+                }
+            } else if photos.isEmpty {
+                VStack(spacing: 20) {
+                    Image(systemName: "photo.on.rectangle.angled")
+                        .font(.system(size: 80))
+                        .foregroundColor(.white)
+                    Text("No photos available")
+                        .font(.title2)
+                        .foregroundColor(.white)
+                }
+            } else {
+                // Full screen photo display - SAME AS ORIGINAL
+                Image(uiImage: photos[currentIndex])
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .clipped()
+                    .contentTransition(.opacity)
+                    .animation(.easeInOut(duration: 0.28), value: currentIndex)
+                    .scaleEffect(isBouncing ? 1.05 : 1.0)
+                    .animation(.spring(response: 0.22, dampingFraction: 0.6), value: isBouncing)
+                
+                // Ripple animation - SAME AS ORIGINAL
+                if showRipple {
+                    GeometryReader { geo in
+                        Circle()
+                            .strokeBorder(Color.white.opacity(0.7), lineWidth: 3)
+                            .frame(width: min(geo.size.width, geo.size.height) * 0.35,
+                                   height: min(geo.size.width, geo.size.height) * 0.35)
+                            .scaleEffect(rippleScale)
+                            .opacity(rippleOpacity)
+                            .position(x: geo.size.width / 2, y: geo.size.height / 2)
+                            .allowsHitTesting(false)
+                    }
+                    .transition(.opacity)
+                }
+                
+                // Photo name overlay - SAME AS ORIGINAL
+                VStack {
+                    Spacer()
+                    
+                    VStack(spacing: 8) {
+                        Text(mockPhotos[currentIndex].1)
+                            .font(.title2)
+                            .fontWeight(.medium)
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .fill(Color.black.opacity(0.7))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 20)
+                                            .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                    )
+                            )
+                            .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 2)
+                        
+                        // Preview instruction
+                        Text("👆 Tap to see animations")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.7))
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(Color.orange.opacity(0.8))
+                            .cornerRadius(8)
+                    }
+                    .padding(.bottom, 80)
+                }
+                
+                // Close button - SAME AS ORIGINAL
+                VStack {
+                    HStack {
+                        Spacer()
+                        
+                        Button("Close") {
+                            // Preview close action
+                        }
+                        .foregroundColor(.white)
+                        .padding()
+                    }
+                    Spacer()
+                }
+                
+                // Photo counter - SAME AS ORIGINAL
+                VStack {
+                    HStack {
+                        Spacer()
+                        
+                        Text("\(currentIndex + 1) of \(photos.count)")
+                            .font(.caption)
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(Color.black.opacity(0.6))
+                            .cornerRadius(12)
+                        
+                        Spacer()
+                    }
+                    .padding(.top, 60)
+                    
+                    Spacer()
+                }
+            }
+        }
+        .onAppear {
+            loadMockPhotos()
+            soundPlayer.playWhoosh(volume: 0.3, rate: 1.2)
+        }
+        .onTapGesture {
+            // SAME ANIMATION FUNCTIONS AS ORIGINAL
+            triggerTapAnimation()
+            nextPhoto()
+        }
+    }
+    
+    private func loadMockPhotos() {
+        // Simulate loading
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            var loadedImages: [UIImage] = []
+            
+            for (systemName, _, color) in mockPhotos {
+                let image = createSystemImage(systemName: systemName, size: 200, color: color)
+                loadedImages.append(image)
+            }
+            
+            self.photos = loadedImages
+            self.isLoading = false
+        }
+    }
+    
+    private func createSystemImage(systemName: String, size: CGFloat, color: UIColor) -> UIImage {
+        let config = UIImage.SymbolConfiguration(pointSize: size, weight: .medium)
+        let image = UIImage(systemName: systemName, withConfiguration: config)?
+            .withTintColor(color, renderingMode: .alwaysOriginal) ?? UIImage()
+        
+        // Create background with gradient
+        let canvasSize = size * 2
+        let renderer = UIGraphicsImageRenderer(size: CGSize(width: canvasSize, height: canvasSize))
+        return renderer.image { context in
+            // Gradient background
+            let colors = [color.withAlphaComponent(0.1), color.withAlphaComponent(0.3)]
+            let gradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(),
+                                    colors: colors.map { $0.cgColor } as CFArray,
+                                    locations: [0.0, 1.0])!
+            
+            context.cgContext.drawRadialGradient(gradient,
+                                               startCenter: CGPoint(x: canvasSize/2, y: canvasSize/2),
+                                               startRadius: 0,
+                                               endCenter: CGPoint(x: canvasSize/2, y: canvasSize/2),
+                                               endRadius: canvasSize/2,
+                                               options: [])
+            
+            // Center the icon properly
+            let imageSize = image.size
+            let x = (canvasSize - imageSize.width) / 2
+            let y = (canvasSize - imageSize.height) / 2
+            image.draw(at: CGPoint(x: x, y: y))
+        }
+    }
+    
+    private func nextPhoto() {
+        guard !photos.isEmpty else { return }
+        
+        // SAME SOUND AND HAPTIC AS ORIGINAL
+        soundPlayer.playWhoosh(volume: 0.2, rate: 1.5)
+        
+        let generator = UIImpactFeedbackGenerator(style: .light)
+        generator.impactOccurred()
+        
+        currentIndex = (currentIndex + 1) % photos.count
+    }
+
+    private func triggerTapAnimation() {
+        // SAME ANIMATION AS ORIGINAL
+        isBouncing = true
+        withAnimation(.spring(response: 0.22, dampingFraction: 0.6)) {
+            isBouncing = false
+        }
+        
+        showRipple = true
+        rippleScale = 0.5
+        rippleOpacity = 0.6
+        withAnimation(.easeOut(duration: 0.55)) {
+            rippleScale = 1.6
+            rippleOpacity = 0.0
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+            showRipple = false
+        }
+    }
+}
