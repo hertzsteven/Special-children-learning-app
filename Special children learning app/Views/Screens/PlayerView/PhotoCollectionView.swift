@@ -276,7 +276,14 @@ struct PhotoCollectionView: View {
         generator.impactOccurred()
         
         // Simple increment with wrap-around to beginning
-        currentIndex = (currentIndex + 1) % photos.count
+        let newIndex = (currentIndex + 1) % photos.count
+        
+        // If only one photo, play audio directly since onChange won't trigger
+        if photos.count == 1 {
+            playAudioForCurrentPhoto()
+        }
+        
+        currentIndex = newIndex
     }
 
     private func triggerTapAnimation() {
