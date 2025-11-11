@@ -158,7 +158,7 @@ struct ContentView: View {
                             .fontWeight(.bold)
                             .foregroundColor(.primary)
                         
-                        Text("Tap a mediaCollection to see and learn")
+                        Text("Tap an mediaCollection to see and learn")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
@@ -483,17 +483,46 @@ struct ContentView: View {
         mediaCollectionItemCollection = savedMediaCollectionItems
     }
     
+    private func generateUniqueCollectionName(baseName: String) -> String {
+        // Get all existing collection titles from both in-memory and persisted collections
+        let currentMediaCollections = MediaCollection.sampleActivities + mediaCollectionItemCollection
+        var existingNames = Set(currentMediaCollections.map { $0.title })
+        
+        // Also check persisted collections (most up-to-date source of truth)
+        let persistedNames = Set(persistence.savedCollections.map { $0.title })
+        existingNames.formUnion(persistedNames)
+        
+        // If the base name is unique, use it
+        if !existingNames.contains(baseName) {
+            return baseName
+        }
+        
+        // Otherwise, find the next available number
+        var counter = 1
+        var newName = "\(baseName) \(counter)"
+        
+        while existingNames.contains(newName) {
+            counter += 1
+            newName = "\(baseName) \(counter)"
+        }
+        
+        return newName
+    }
+    
     private func addSingleVideo(from asset: PHAsset, name: String) {
         let cleanName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         
+        // Generate unique name by checking existing names
+        let finalName = generateUniqueCollectionName(baseName: cleanName)
+        
         let mediaItem = SavedMediaItem(
             assetIdentifier: asset.localIdentifier,
-            customName: cleanName,
+            customName: finalName,
             audioRecordingFileName: nil
         )
         
         persistence.saveCollectionWithMediaItems(
-            title: cleanName,
+            title: finalName,
             mediaItems: [mediaItem],
             imageName: asset.mediaType == .video ? "video.circle" : "photo.circle",
             backgroundColor: asset.mediaType == .video ? "softBlue" : "sage"
@@ -503,7 +532,7 @@ struct ContentView: View {
         if let newCollection = persistence.savedCollections.last {
             let newMediaCollection = MediaCollection(
                 id: newCollection.id,
-                title: cleanName,
+                title: finalName,
                 imageName: asset.mediaType == .video ? "video.circle" : "photo.circle",
                 videoAssets: asset.mediaType == .video ? [asset] : nil,
                 photoAssets: asset.mediaType == .image ? [asset] : nil,
@@ -517,7 +546,7 @@ struct ContentView: View {
         
         // Show confirmation
         let mediaType = asset.mediaType == .video ? "video" : "photo"
-        toastMessage = "'\(cleanName)' \(mediaType) saved!"
+        toastMessage = "'\(finalName)' \(mediaType) saved!"
         showToast = true
         
         // Reset
@@ -529,7 +558,8 @@ struct ContentView: View {
         print("Creating collection '\(collectionName)' with \(namedItems.count) named items")
         
         let cleanName = collectionName.trimmingCharacters(in: .whitespacesAndNewlines)
-        let finalName = cleanName.isEmpty ? "My Media Collection" : cleanName
+        let defaultName = "My Media Collection"
+        let baseName = cleanName.isEmpty ? defaultName : cleanName
         
         // Get all assets by fetching them from the namedItems
         Task {
@@ -542,13 +572,20 @@ struct ContentView: View {
             let videoAssets = allAssets.filter { $0.mediaType == .video }
             let photoAssets = allAssets.filter { $0.mediaType == .image }
             
-            // Save to persistence with individual names and audio recordings FIRST
-            persistence.saveCollectionWithMediaItems(
-                title: finalName,
-                mediaItems: namedItems,
-                imageName: "rectangle.stack",
-                backgroundColor: "warmBeige"
-            )
+            // Generate unique name right before saving (atomic operation on MainActor)
+            let finalName = await MainActor.run {
+                let uniqueName = generateUniqueCollectionName(baseName: baseName)
+                
+                // Save immediately after generating unique name
+                persistence.saveCollectionWithMediaItems(
+                    title: uniqueName,
+                    mediaItems: namedItems,
+                    imageName: "rectangle.stack",
+                    backgroundColor: "warmBeige"
+                )
+                
+                return uniqueName
+            }
             
             await MainActor.run {
                 // Find the newly created collection to get its ID
@@ -722,6 +759,7 @@ struct ContentView: View {
     }
 }
 
-#Preview("ContentView", traits: .landscapeLeft) {
+#Preview {
     ContentView()
+        .previewInterfaceOrientation(.landscapeLeft)
 }
