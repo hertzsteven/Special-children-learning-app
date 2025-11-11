@@ -66,7 +66,31 @@ struct ContentView: View {
                 Color.creamBackground
                     .ignoresSafeArea()
                 
-                VStack(spacing: 30) {
+                VStack(spacing: 20) {
+                    // App Title Section
+                    VStack(spacing: 8) {
+                        Text("Learning - Together")
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                            .foregroundColor(.primary)
+                        
+                        Text("Tap a media collection to see and learn")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.top, 20)
+                    .padding(.bottom, 20)
+                    
+                    // Section Heading
+                    HStack {
+                        Text("My Media Albums")
+                            .font(.title)
+                            .fontWeight(.semibold)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 20)
+                    
+                    // Add Album Button
                     Button(action: {
                         showingMediaTypeChoice = true
                     }) {
@@ -82,50 +106,6 @@ struct ContentView: View {
                         .padding(.vertical, 16)
                         .background(Color(red: 0.4, green: 0.6, blue: 0.8)) // Soft blue
                         .cornerRadius(12)
-                    }
-                    
-                    // App Title and Settings
-                    VStack(spacing: 8) {
-
-                        HStack {
-//                            VStack(alignment: .leading, spacing: 8) {
-//                                Text("Learning Together")
-//                                    .font(.largeTitle)
-//                                    .fontWeight(.bold)
-//                                    .foregroundColor(.primary)
-                                
-//                                Text("Tap an mediaCollection to see and learn")
-//                                    .font(.title3)
-//                                    .foregroundColor(.secondary)
-                                
-//                                Button(action: {
-//                                    showingVideoSelection = true
-//                                }) {
-//                                    Image(systemName: "plus.circle.fill")
-//                                        .font(.largeTitle)
-//                                        .foregroundColor(.blue)
-//                                        .background(
-//                                            Circle()
-//                                                .fill(Color.white)
-//                                                .frame(width: 48, height: 48)
-//                                        )
-//                                        .shadow(color: .blue.opacity(0.3), radius: 2, x: 0, y: 1)
-//                                }
-//                                .padding(.vertical, 32)
-//                            }
-                            
-//                            Spacer()
-                        }
-                    }
-//                    .padding(.top, 50)
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 20)
-                    
-                    HStack {
-                        Text("My Media Albums")
-                            .font(.largeTitle)
-                            .fontWeight(.semibold)
-                        Spacer()
                     }
                     .padding(.horizontal, 20)
                     
@@ -148,22 +128,7 @@ struct ContentView: View {
                 // NEW: Collection Selection Overlay
                 collectionSelectionOverlay
             }
-//            .navigationTitle("Learning Together")
-            .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    VStack(spacing: 4) {
-                        Text("Learning - Together")
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
-                            .foregroundColor(.primary)
-                        
-                        Text("Tap an mediaCollection to see and learn")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                }
-            }
+            .navigationBarTitleDisplayMode(.inline)
             
             .navigationDestination(for: MediaCollection.self) { mediaCollection in
                 let _ = print(mediaCollection.title, mediaCollection.id)
@@ -759,7 +724,6 @@ struct ContentView: View {
     }
 }
 
-#Preview {
+#Preview("ContentView", traits: .landscapeLeft) {
     ContentView()
-        .previewInterfaceOrientation(.landscapeLeft)
 }

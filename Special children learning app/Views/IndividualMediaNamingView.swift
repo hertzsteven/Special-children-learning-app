@@ -73,7 +73,22 @@ struct IndividualMediaNamingView: View {
         self.onCancel = onCancel
         self._workingItems = State(initialValue: mediaItems)
         self._currentName = State(initialValue: mediaItems.first?.customName ?? "")
-        self._collectionName = State(initialValue: "My Photo Collection")
+        
+        // Determine default collection name based on media type
+        let videoCount = mediaItems.filter { $0.isVideo }.count
+        let photoCount = mediaItems.filter { !$0.isVideo }.count
+        let defaultCollectionName: String
+        if videoCount > 0 && photoCount == 0 {
+            // All videos
+            defaultCollectionName = "My Video Collection"
+        } else if photoCount > 0 && videoCount == 0 {
+            // All photos
+            defaultCollectionName = "My Photo Collection"
+        } else {
+            // Mixed media
+            defaultCollectionName = "My Media Collection"
+        }
+        self._collectionName = State(initialValue: defaultCollectionName)
         
         // Debug: Print the number of items we're starting with
         print("IndividualMediaNamingView initialized with \(mediaItems.count) items")
