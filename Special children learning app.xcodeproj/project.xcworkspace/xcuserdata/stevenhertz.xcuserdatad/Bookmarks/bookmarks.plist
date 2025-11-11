@@ -57,15 +57,15 @@
 				<key>location-parameters</key>
 				<dict>
 					<key>EndingColumnNumber</key>
-					<string>0</string>
+					<string>2</string>
 					<key>EndingLineNumber</key>
 					<string>328</string>
 					<key>StartingColumnNumber</key>
-					<string>0</string>
+					<string>2</string>
 					<key>StartingLineNumber</key>
 					<string>328</string>
 					<key>Timestamp</key>
-					<string>779226375.368469</string>
+					<string>784564597.072284</string>
 				</dict>
 				<key>rebasable-url</key>
 				<dict>
@@ -83,13 +83,13 @@
 				<key>focused</key>
 				<string></string>
 				<key>leading</key>
-				<string>                Text(progressText)
-                    .font(.caption)
-</string>
+				<string>//                Text(progressText)
+//                    .font(.caption)
+//</string>
 				<key>trailing</key>
 				<string>                    .foregroundColor(.secondary)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
+//                    .padding(.horizontal, 12)
+//                    .padding(.vertical, 6)
 </string>
 			</dict>
 			<key>type</key>
