@@ -224,7 +224,7 @@ class VideoCollectionPersistence: ObservableObject {
         }
     }
 
-    private func saveCollections() {
+    func saveCollections() {
         do {
             let data = try JSONEncoder().encode(savedCollections)
             try data.write(to: collectionsFileURL)

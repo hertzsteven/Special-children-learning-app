@@ -66,7 +66,7 @@ struct ContentView: View {
                 Color.creamBackground
                     .ignoresSafeArea()
                 
-                VStack(spacing: 20) {
+                VStack(spacing: 0) {
                     // App Title Section
                     VStack(spacing: 8) {
                         Text("Learning - Together")
@@ -79,7 +79,7 @@ struct ContentView: View {
                             .foregroundColor(.secondary)
                     }
                     .padding(.top, 20)
-                    .padding(.bottom, 20)
+                    .padding(.bottom, 12) // Smaller gap to heading (they're related)
                     
                     // Section Heading
                     HStack {
@@ -89,6 +89,7 @@ struct ContentView: View {
                         Spacer()
                     }
                     .padding(.horizontal, 20)
+                    .padding(.bottom, 8) // Small gap to button (they're closely related)
                     
                     // Add Album Button
                     Button(action: {
@@ -108,6 +109,7 @@ struct ContentView: View {
                         .cornerRadius(12)
                     }
                     .padding(.horizontal, 20)
+                    .padding(.bottom, 36) // Medium gap to grid (action → content transition)
                     
                     // Activities Grid
                     ScrollView {
@@ -442,6 +444,14 @@ struct ContentView: View {
     private func isCustom(_ mediaCollection: MediaCollection) -> Bool {
         mediaCollectionItemCollection.contains(where: { $0.id == mediaCollection.id })
     }
+    
+    // Generate a consistent color for a collection based on its ID
+    private func colorForCollection(id: UUID) -> String {
+        let colors = ["warmBeige", "softBlue", "sage", "lavender"]
+        let hash = id.uuidString.hashValue
+        let index = abs(hash) % colors.count
+        return colors[index]
+    }
 
     private func loadSavedCollections() async {
         let savedMediaCollectionItems = await persistence.convertToMediaCollectionItems()
@@ -541,12 +551,12 @@ struct ContentView: View {
             let finalName = await MainActor.run {
                 let uniqueName = generateUniqueCollectionName(baseName: baseName)
                 
-                // Save immediately after generating unique name
+                // Save immediately after generating unique name (will get a UUID from persistence)
                 persistence.saveCollectionWithMediaItems(
                     title: uniqueName,
                     mediaItems: namedItems,
                     imageName: "rectangle.stack",
-                    backgroundColor: "warmBeige"
+                    backgroundColor: "warmBeige" // Temporary, will update below
                 )
                 
                 return uniqueName
@@ -555,6 +565,24 @@ struct ContentView: View {
             await MainActor.run {
                 // Find the newly created collection to get its ID
                 if let newCollection = persistence.savedCollections.last {
+                    // Generate color based on the actual collection ID
+                    let collectionColor = colorForCollection(id: newCollection.id)
+                    
+                    // Update the saved collection with the correct color
+                    if let index = persistence.savedCollections.firstIndex(where: { $0.id == newCollection.id }) {
+                        let updatedCollection = SavedVideoCollection(
+                            id: newCollection.id,
+                            title: newCollection.title,
+                            imageName: newCollection.imageName,
+                            assetIdentifiers: newCollection.assetIdentifiers,
+                            mediaItems: newCollection.mediaItems,
+                            backgroundColor: collectionColor,
+                            createdDate: newCollection.createdDate
+                        )
+                        persistence.savedCollections[index] = updatedCollection
+                        persistence.saveCollections()
+                    }
+                    
                     // Create MediaCollectionItem with the SAME ID as the saved collection
                     let newMediaCollection = MediaCollection(
                         id: newCollection.id,  // ← Use saved collection's ID
@@ -564,7 +592,7 @@ struct ContentView: View {
                         photoAssets: photoAssets.isEmpty ? nil : photoAssets,
                         mediaItems: namedItems,
                         audioDescription: "A collection of \(allAssets.count) items: \(namedItems.map { $0.customName }.joined(separator: ", "))",
-                        backgroundColor: "warmBeige"
+                        backgroundColor: collectionColor
                     )
                     
                     mediaCollectionItemCollection.append(newMediaCollection)
