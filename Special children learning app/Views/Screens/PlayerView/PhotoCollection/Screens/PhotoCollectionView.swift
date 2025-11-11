@@ -313,16 +313,16 @@ struct PhotoCollectionView: View {
 }
 
 // Mock version for preview that mimics the real PhotoCollectionView behavior
-private struct MockPhotoCollectionView: View {
-    @State private var currentIndex = 0
-    @State private var photos: [UIImage] = []
+struct MockPhotoCollectionView: View {
+    @State var currentIndex = 0
+    @State var photos: [UIImage] = []
     @State private var isLoading = true
     @StateObject private var soundPlayer = SoundPlayer.shared
     
-    @State private var isBouncing = false
-    @State private var showRipple = false
-    @State private var rippleScale: CGFloat = 0.5
-    @State private var rippleOpacity: Double = 0.0
+    @State var isBouncing = false
+    @State  var showRipple = false
+    @State  var rippleScale: CGFloat = 0.5
+    @State  var rippleOpacity: Double = 0.0
     
     // Mock photo data with system symbols
     private let mockPhotos = [
@@ -361,17 +361,19 @@ private struct MockPhotoCollectionView: View {
                         .foregroundColor(.white)
                 }
             } else {
+                thePhotoView()
                 // Full screen photo display - SAME AS ORIGINAL
+                /*
                 Image(uiImage: photos[currentIndex])
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .clipped()
-                    .contentTransition(.opacity)
-                    .animation(.easeInOut(duration: 0.28), value: currentIndex)
-                    .scaleEffect(isBouncing ? 1.05 : 1.0)
-                    .animation(.spring(response: 0.22, dampingFraction: 0.6), value: isBouncing)
-                
+//                    .contentTransition(.opacity)
+//                    .animation(.easeInOut(duration: 0.28), value: currentIndex)
+                    .scaleEffect(isBouncing ? 1.25 : 1.0)
+//                    .animation(.spring(response: 1.22, dampingFraction: 0.6), value: isBouncing)
+                */
                 // Ripple animation - SAME AS ORIGINAL
                 if showRipple {
                     GeometryReader { geo in
@@ -523,10 +525,11 @@ private struct MockPhotoCollectionView: View {
         currentIndex = (currentIndex + 1) % photos.count
     }
 
+    /*
     private func triggerTapAnimation() {
         // SAME ANIMATION AS ORIGINAL
         isBouncing = true
-        withAnimation(.spring(response: 0.22, dampingFraction: 0.6)) {
+        withAnimation(.spring(response: 2.22, dampingFraction: 0.6)) {
             isBouncing = false
         }
         
@@ -541,4 +544,6 @@ private struct MockPhotoCollectionView: View {
             showRipple = false
         }
     }
+*/
 }
+

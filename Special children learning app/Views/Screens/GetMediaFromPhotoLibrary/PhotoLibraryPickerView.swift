@@ -313,6 +313,7 @@ struct PhotoLibraryPickerView: View {
                 },
                 skipCollectionNaming: skipCollectionNaming
             )
+            .interactiveDismissDisabled()
         }
     }
     

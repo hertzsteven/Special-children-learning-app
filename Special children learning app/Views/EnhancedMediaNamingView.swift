@@ -202,7 +202,7 @@ struct EnhancedMediaNamingView: View {
                 
                 Spacer()
                 
-                Text(skipCollectionNaming ? "Name Media Items" : "Name Your Media")
+                Text(skipCollectionNaming ? "Name & Add Audio" : "Name & Add Audio")
                     .font(.headline)
                     .fontWeight(.semibold)
                 

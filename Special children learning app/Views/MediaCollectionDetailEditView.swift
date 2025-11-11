@@ -298,6 +298,7 @@ struct MediaCollectionDetailEditView: View {
                     },
                     skipCollectionNaming: true // 🎯 THIS IS THE KEY FIX!
                 )
+                .interactiveDismissDisabled()
             }
         }
     }

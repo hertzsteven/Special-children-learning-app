@@ -88,7 +88,7 @@ struct ContentView: View {
                     VStack(spacing: 8) {
 
                         HStack {
-                            VStack(alignment: .leading, spacing: 8) {
+//                            VStack(alignment: .leading, spacing: 8) {
 //                                Text("Learning Together")
 //                                    .font(.largeTitle)
 //                                    .fontWeight(.bold)
@@ -112,7 +112,7 @@ struct ContentView: View {
 //                                        .shadow(color: .blue.opacity(0.3), radius: 2, x: 0, y: 1)
 //                                }
 //                                .padding(.vertical, 32)
-                            }
+//                            }
                             
 //                            Spacer()
                         }
@@ -158,7 +158,7 @@ struct ContentView: View {
                             .fontWeight(.bold)
                             .foregroundColor(.primary)
                         
-                        Text("Tap an mediaCollection to see and learn")
+                        Text("Tap a mediaCollection to see and learn")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
@@ -722,6 +722,6 @@ struct ContentView: View {
     }
 }
 
-#Preview {
+#Preview("ContentView", traits: .landscapeLeft) {
     ContentView()
 }
