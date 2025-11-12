@@ -357,7 +357,7 @@ struct ContentView: View {
     private func mediaCollectionCard(for mediaCollection: MediaCollection) -> some View {
         let editHandler: (() -> Void)? = isCustom(mediaCollection) ? { navPath.append(mediaCollection) } : nil
         
-        mediaCollectionCardView(
+        MediaCollectionCardView(
             mediaCollection: mediaCollection,
             onTap: {
 //                if mediaCollection.isVideoCollection || mediaCollection.isPhotoCollection || mediaCollection.isMixedMediaCollection {

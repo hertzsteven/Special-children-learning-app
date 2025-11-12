@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct mediaCollectionCardView: View {
+struct MediaCollectionCardView: View {
     let mediaCollection: MediaCollection
     let onTap: () -> Void
     let onEdit: (() -> Void)? // NEW: Optional edit callback
@@ -129,7 +129,7 @@ struct CardButtonStyle: ButtonStyle {
 }
 
 #Preview {
-    mediaCollectionCardView(
+    MediaCollectionCardView(
         mediaCollection: MediaCollection.sampleActivities[0],
         onTap: {
             print("Card tapped")
