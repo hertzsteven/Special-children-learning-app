@@ -16,8 +16,11 @@
 		466E93DF2EC3648400DBE9D7 /* Special children learning app.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = "Special children learning app.xcodeproj"; sourceTree = "<group>"; };
 		466F16CE2EC3B7830010CCD2 /* Special children learning app.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = "Special children learning app.xcodeproj"; sourceTree = "<group>"; };
 		466F172D2EC4BBAC0010CCD2 /* Special children learning app.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = "Special children learning app.xcodeproj"; sourceTree = "<group>"; };
+		467D25F02EC4ECE80008019B /* Special children learning app.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = "Special children learning app.xcodeproj"; sourceTree = "<group>"; };
 		46847C892E7374730023266C /* Special children learning app.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "Special children learning app.xcodeproj"; path = "Special children learning app/Special children learning app.xcodeproj"; sourceTree = SOURCE_ROOT; };
+		468CA8902EC4F066005685DD /* Special children learning app.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = "Special children learning app.xcodeproj"; sourceTree = "<group>"; };
 		46E61EFA2E80491E000B7820 /* Special children learning app.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = "Special children learning app.xcodeproj"; sourceTree = "<group>"; };
+		46FB381A2EC4EED9006FAF62 /* Special children learning app.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = "Special children learning app.xcodeproj"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -86,6 +89,13 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		467D25F22EC4ECE80008019B /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 		46847C8C2E7374730023266C /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -93,7 +103,21 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		468CA8932EC4F066005685DD /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 		46E61EFE2E80491E000B7820 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		46FB381C2EC4EED9006FAF62 /* Products */ = {
 			isa = PBXGroup;
 			children = (
 			);
@@ -162,8 +186,20 @@
 					ProjectRef = 46E61EFA2E80491E000B7820 /* Special children learning app.xcodeproj */;
 				},
 				{
+					ProductGroup = 467D25F22EC4ECE80008019B /* Products */;
+					ProjectRef = 467D25F02EC4ECE80008019B /* Special children learning app.xcodeproj */;
+				},
+				{
+					ProductGroup = 468CA8932EC4F066005685DD /* Products */;
+					ProjectRef = 468CA8902EC4F066005685DD /* Special children learning app.xcodeproj */;
+				},
+				{
 					ProductGroup = 466E93E32EC3648400DBE9D7 /* Products */;
 					ProjectRef = 466E93DF2EC3648400DBE9D7 /* Special children learning app.xcodeproj */;
+				},
+				{
+					ProductGroup = 46FB381C2EC4EED9006FAF62 /* Products */;
+					ProjectRef = 46FB381A2EC4EED9006FAF62 /* Special children learning app.xcodeproj */;
 				},
 				{
 					ProductGroup = 466F16D22EC3B7830010CCD2 /* Products */;
