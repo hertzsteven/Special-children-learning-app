@@ -14,6 +14,8 @@
 		466765CA2E68B5FC00EAE1C0 /* Special children learning app.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Special children learning app.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		466766722E69D91800EAE1C0 /* Photos.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Photos.framework; path = System/Library/Frameworks/Photos.framework; sourceTree = SDKROOT; };
 		466E93DF2EC3648400DBE9D7 /* Special children learning app.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = "Special children learning app.xcodeproj"; sourceTree = "<group>"; };
+		466F16CE2EC3B7830010CCD2 /* Special children learning app.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = "Special children learning app.xcodeproj"; sourceTree = "<group>"; };
+		466F172D2EC4BBAC0010CCD2 /* Special children learning app.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = "Special children learning app.xcodeproj"; sourceTree = "<group>"; };
 		46847C892E7374730023266C /* Special children learning app.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "Special children learning app.xcodeproj"; path = "Special children learning app/Special children learning app.xcodeproj"; sourceTree = SOURCE_ROOT; };
 		46E61EFA2E80491E000B7820 /* Special children learning app.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = "Special children learning app.xcodeproj"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -64,6 +66,20 @@
 			sourceTree = "<group>";
 		};
 		466E93E32EC3648400DBE9D7 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		466F16D22EC3B7830010CCD2 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		466F17312EC4BBAC0010CCD2 /* Products */ = {
 			isa = PBXGroup;
 			children = (
 			);
@@ -138,12 +154,20 @@
 			projectDirPath = "";
 			projectReferences = (
 				{
+					ProductGroup = 466F17312EC4BBAC0010CCD2 /* Products */;
+					ProjectRef = 466F172D2EC4BBAC0010CCD2 /* Special children learning app.xcodeproj */;
+				},
+				{
 					ProductGroup = 46E61EFE2E80491E000B7820 /* Products */;
 					ProjectRef = 46E61EFA2E80491E000B7820 /* Special children learning app.xcodeproj */;
 				},
 				{
 					ProductGroup = 466E93E32EC3648400DBE9D7 /* Products */;
 					ProjectRef = 466E93DF2EC3648400DBE9D7 /* Special children learning app.xcodeproj */;
+				},
+				{
+					ProductGroup = 466F16D22EC3B7830010CCD2 /* Products */;
+					ProjectRef = 466F16CE2EC3B7830010CCD2 /* Special children learning app.xcodeproj */;
 				},
 				{
 					ProductGroup = 46847C8C2E7374730023266C /* Products */;
@@ -320,6 +344,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
