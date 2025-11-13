@@ -186,16 +186,8 @@
 					ProjectRef = 46E61EFA2E80491E000B7820 /* Special children learning app.xcodeproj */;
 				},
 				{
-					ProductGroup = 467D25F22EC4ECE80008019B /* Products */;
-					ProjectRef = 467D25F02EC4ECE80008019B /* Special children learning app.xcodeproj */;
-				},
-				{
 					ProductGroup = 468CA8932EC4F066005685DD /* Products */;
 					ProjectRef = 468CA8902EC4F066005685DD /* Special children learning app.xcodeproj */;
-				},
-				{
-					ProductGroup = 466E93E32EC3648400DBE9D7 /* Products */;
-					ProjectRef = 466E93DF2EC3648400DBE9D7 /* Special children learning app.xcodeproj */;
 				},
 				{
 					ProductGroup = 46FB381C2EC4EED9006FAF62 /* Products */;
@@ -204,6 +196,14 @@
 				{
 					ProductGroup = 466F16D22EC3B7830010CCD2 /* Products */;
 					ProjectRef = 466F16CE2EC3B7830010CCD2 /* Special children learning app.xcodeproj */;
+				},
+				{
+					ProductGroup = 467D25F22EC4ECE80008019B /* Products */;
+					ProjectRef = 467D25F02EC4ECE80008019B /* Special children learning app.xcodeproj */;
+				},
+				{
+					ProductGroup = 466E93E32EC3648400DBE9D7 /* Products */;
+					ProjectRef = 466E93DF2EC3648400DBE9D7 /* Special children learning app.xcodeproj */;
 				},
 				{
 					ProductGroup = 46847C8C2E7374730023266C /* Products */;
